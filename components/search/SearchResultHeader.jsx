@@ -1,5 +1,12 @@
-// components/SearchResultsHeader.jsx
-export default function SearchResultsHeader({ totalResults = 0, query = "", showingFrom = 1, showingTo = 16 }) {
+"use client"
+
+export default function SearchResultsHeader({
+  totalResults = 0,
+  query = "",
+  showingFrom = 1,
+  showingTo = 16,
+  sort = "featured",
+}) {
   return (
     <div className="flex justify-between items-center mb-4 shadow-sm border-b pb-2">
       {/* Results Info */}
@@ -10,17 +17,7 @@ export default function SearchResultsHeader({ totalResults = 0, query = "", show
         <span className="font-bold text-amazon-orange">{`"${query}"`}</span>
       </div>
 
-      {/* Sort Dropdown */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm">Sort by:</span>
-        <select className="text-sm bg-gray-100 border border-gray-300 rounded px-2 py-1 shadow-sm focus:ring-1 focus:ring-amazon-secondary focus:border-amazon-secondary">
-          <option>Featured</option>
-          <option>Price: Low to High</option>
-          <option>Price: High to Low</option>
-          <option>Avg. Customer Review</option>
-          <option>Newest Arrivals</option>
-        </select>
-      </div>
+      
     </div>
   );
 }

@@ -19,7 +19,7 @@ const CategoryGrid = ({ products }) => {
 
   const categoryEntries = Object.entries(categories);
 
-  const maxCategories = user ? categoryEntries.length : 3;
+  const maxCategories = user ? categoryEntries.length-1 : 3;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
