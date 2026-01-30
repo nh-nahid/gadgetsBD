@@ -181,8 +181,8 @@ const ProductsPage = async ({ searchParams }) => {
             keyword
               ? keyword
               : selectedCategories.length > 0
-              ? selectedCategories.map((c) => c.replace(/-/g, " ")).join(", ")
-              : "All"
+                ? selectedCategories.map((c) => c.replace(/-/g, " ")).join(", ")
+                : "All"
           }
           showingFrom={1}
           showingTo={products.length}
