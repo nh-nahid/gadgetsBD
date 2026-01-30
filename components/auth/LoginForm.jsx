@@ -121,7 +121,7 @@ const LoginForm = () => {
         {/* Terms */}
         <div className="mt-4 text-xs text-gray-600">
           <p>
-            By continuing, you agree to Gadgets BD's{" "}
+            By continuing, you agree to Gadgets BD&apos;s{" "}
             <a href="#" className="text-amazon-blue hover:underline">
               Conditions of Use
             </a>{" "}

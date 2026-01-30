@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 // components/products/ProductCard.jsx
 export default function ProductCard({ product }) {
   const mainImage = product.images.find((img) => img.isMain)?.url;
@@ -11,7 +13,7 @@ export default function ProductCard({ product }) {
     >
       {/* Product Image */}
       <div className="w-48 h-48 flex-shrink-0 bg-gray-50 flex items-center justify-center">
-        <img
+        <Image height={100} width={100}
           src={mainImage || "/placeholder.png"}
           alt={product.title}
           className="h-full object-cover mix-blend-multiply"

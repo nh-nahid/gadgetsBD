@@ -82,7 +82,7 @@ const ForgotPass = () => {
               <div>
                 <strong>Check your email</strong>
                 <p className="mt-1">
-                  We've sent a password reset link to your email address.
+                  We&apos;ve sent a password reset link to your email address.
                 </p>
               </div>
             </div>
