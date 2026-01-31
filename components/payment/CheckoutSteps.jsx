@@ -4,7 +4,7 @@ import ProductList from "./ProductList";
 import PaymentMethod from "./PaymentMethod";
 import ShippingAddress from "./ShipingAddress";
 
-export default function CheckoutSteps({ cartItems, buyNowProduct, userAddress, onQtyChange, userEmail, userId, onAddressChange }) {
+export default function CheckoutSteps({ cartItems, buyNowProduct, userAddress, onQtyChange, userEmail, userId, onAddressChange, cardName, setCardName, cardNumber, setCardNumber, cvv, setCvv, expMonth, setExpMonth, expYear, setExpYear }) {
   return (
     <>
       <ShippingAddress 
@@ -14,7 +14,18 @@ export default function CheckoutSteps({ cartItems, buyNowProduct, userAddress, o
         onAddressChange={onAddressChange}
       />
       <ProductList cartItems={cartItems} buyNowProduct={buyNowProduct} onQtyChange={onQtyChange} />
-      <PaymentMethod />
+      <PaymentMethod 
+          cardName={cardName}
+          setCardName={setCardName}
+          cardNumber={cardNumber}
+          setCardNumber={setCardNumber}
+          cvv={cvv}
+          setCvv={setCvv}
+          expMonth={expMonth}
+          setExpMonth={setExpMonth}
+          expYear={expYear}
+          setExpYear={setExpYear}
+      />
     </>
   );
 }

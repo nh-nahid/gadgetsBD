@@ -8,6 +8,11 @@ export default function OrderSummary({
   userId,
   userEmail,
   shippingAddress,
+  cardName,
+  cardNumber,
+  cvv,
+  expMonth,
+  expYear,
 }) {
   const router = useRouter();
 
@@ -33,7 +38,7 @@ export default function OrderSummary({
 
   // ---------------- PLACE ORDER ----------------
   const handlePlaceOrder = async () => {
-    // --- Validation ---
+    // --- Basic validation ---
     if (!userId || !userEmail) {
       alert("User not logged in!");
       return;
@@ -46,6 +51,12 @@ export default function OrderSummary({
 
     if (!productsToShow.length) {
       alert("No products to order!");
+      return;
+    }
+
+    // --- Payment validation ---
+    if (!cardName || !cardNumber || !cvv || !expMonth || !expYear) {
+      alert("Please fill in all payment details!");
       return;
     }
 
@@ -76,6 +87,11 @@ export default function OrderSummary({
           payment: {
             method: "Card",
             status: "paid",
+            cardName,
+            cardNumber,
+            cvv,
+            expMonth,
+            expYear,
           },
         }),
       });

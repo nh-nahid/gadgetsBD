@@ -45,7 +45,7 @@ export default function OrderSuccessBanner({ order }) {
 
         </div>
 
-        <OrderActions />
+        <OrderActions orderId={order?.orderNumber}/>
       </div>
     </div>
   );

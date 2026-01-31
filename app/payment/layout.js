@@ -11,13 +11,13 @@ export const metadata = {
 export default function CheckoutLayout({ children }) {
   return (
 
-    <html lang="en">
-      <body className="bg-amazon-background text-amazon-text flex flex-col min-h-screen">
+  
+      <div className="bg-amazon-background text-amazon-text flex flex-col min-h-screen">
       <CheckoutHeader/>
       <main className="checkout-container flex-1 py-10 px-4 flex flex-col lg:flex-row gap-8">{children}</main>
       <SecondaryFooter/>
-    </body>
-    </html>
+    </div>
+
 
     
   );

@@ -10,8 +10,8 @@ export const metadata = {
 
 export default function RootLayout({ children, auth }) {
   return (
-    <html lang="en">
-      <body className="bg-amazon-background text-amazon-text flex flex-col min-h-screen"
+   
+      <div className="bg-amazon-background text-amazon-text flex flex-col min-h-screen"
 
       >
       
@@ -20,7 +20,7 @@ export default function RootLayout({ children, auth }) {
         {children}
         <Footer />
 
-      </body>
-    </html>
+      </div>
+   
   );
 }

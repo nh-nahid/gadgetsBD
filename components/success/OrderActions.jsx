@@ -1,10 +1,29 @@
+"use client";
 import { Download } from "lucide-react";
 import Link from "next/link";
 
-export default function OrderActions() {
+export default function OrderActions({ orderId }) {
+  const handleDownload = () => {
+    if (!orderId) {
+      alert("Order ID missing!");
+      return;
+    }
+
+    try {
+      // Open invoice PDF in a new tab
+      window.open(`/api/orders/${orderId}/invoice`, "_blank");
+    } catch (err) {
+      console.error("Failed to download invoice:", err);
+      alert("Failed to download invoice. Try again.");
+    }
+  };
+
   return (
     <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row gap-4 items-center">
-      <button className="w-full sm:w-auto px-8 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 shadow-xs flex items-center justify-center gap-2">
+      <button
+        onClick={handleDownload}
+        className="w-full sm:w-auto px-8 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 shadow-xs flex items-center justify-center gap-2"
+      >
         <Download className="w-4 h-4" />
         Download Invoice
       </button>
