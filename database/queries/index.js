@@ -1,4 +1,5 @@
 import { cartModel } from "@/models/cart-model";
+import orderModel from "@/models/order-model";
 import { productModel } from "@/models/product-model";
 import { reviewModel } from "@/models/review-model";
 import { shopModel } from "@/models/shop-model";
@@ -241,4 +242,27 @@ export async function getFullCartByUser(userId) {
   });
 
   return cleanedCarts;
+}
+
+
+export async function getOrderById(orderId) {
+  if (!orderId) return null;
+
+  await dbConnect();
+
+  const order = await orderModel.findById(orderId).lean();
+  if (!order) return null;
+
+  return replaceMongoIdInObject(order);
+}
+
+
+export async function getOrdersByUser(userId) {
+  if (!userId) return [];
+
+  await dbConnect();
+
+  const orders = await orderModel.find({ userId }).sort({ createdAt: -1 }).lean();
+
+  return replaceMongoIdInArray(orders);
 }

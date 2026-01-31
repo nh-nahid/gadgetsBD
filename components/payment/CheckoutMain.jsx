@@ -26,7 +26,7 @@ export default function CheckoutMain({ cartItems, buyNowProduct, userAddress, on
       </div>
 
       {/* RIGHT: Order Summary */}
-      <OrderSummary cartItems={productsToShow} buyNowProduct={buyNowProduct} />
+      <OrderSummary cartItems={productsToShow} buyNowProduct={buyNowProduct} userId={userId} userEmail={userEmail} shippingAddress={userAddress} />
     </main>
   );
 }

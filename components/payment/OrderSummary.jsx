@@ -1,7 +1,16 @@
-// components/OrderSummary.jsx
-import React from "react";
+"use client";
 
-export default function OrderSummary({ cartItems = [], buyNowProduct = null }) {
+import { useRouter } from "next/navigation";
+
+export default function OrderSummary({
+  cartItems = [],
+  buyNowProduct = null,
+  userId,
+  userEmail,
+  shippingAddress,
+}) {
+  const router = useRouter();
+
   // Combine buyNowProduct with cart items
   const productsToShow = buyNowProduct
     ? [buyNowProduct, ...cartItems.filter(item => item.productId !== buyNowProduct.productId)]
@@ -12,8 +21,9 @@ export default function OrderSummary({ cartItems = [], buyNowProduct = null }) {
   let subtotal = 0;
 
   productsToShow.forEach(item => {
-    const qty = item.quantity || 1;
-    subtotal += item.price * qty;
+    const qty = Number(item.quantity) || 1;
+    const price = Number(item.price) || 0;
+    subtotal += price * qty;
     totalItems += qty;
   });
 
@@ -21,11 +31,86 @@ export default function OrderSummary({ cartItems = [], buyNowProduct = null }) {
   const serviceFee = 500;
   const orderTotal = subtotal + deliveryFee + serviceFee;
 
+  // ---------------- PLACE ORDER ----------------
+  const handlePlaceOrder = async () => {
+    // --- Validation ---
+    if (!userId || !userEmail) {
+      alert("User not logged in!");
+      return;
+    }
+
+    if (!shippingAddress) {
+      alert("Please select a shipping address!");
+      return;
+    }
+
+    if (!productsToShow.length) {
+      alert("No products to order!");
+      return;
+    }
+
+    const orderedItems = productsToShow.map(p => ({
+      productId: p.productId,
+      title: p.name,
+      image: p.image,
+      price: Number(p.price),
+      quantity: Number(p.quantity),
+      seller: p.seller || "Unknown",
+    }));
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          userEmail,
+          items: orderedItems,
+          shippingAddress,
+          summary: {
+            subtotal,
+            deliveryFee,
+            serviceFee,
+            total: orderTotal,
+          },
+          payment: {
+            method: "Card",
+            status: "paid",
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("Order POST failed:", errText);
+        alert("Order failed. See console for details.");
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.success && data.orderId) {
+        router.push(`/success/${data.orderId}`);
+      } else {
+        console.error("Order API response error:", data);
+        alert(data.message || "Order failed. Try again.");
+      }
+    } catch (err) {
+      console.error("Order API error:", err);
+      alert("Something went wrong. Try again.");
+    }
+  };
+
+  if (!productsToShow.length) {
+    return <p className="text-center py-4">No products in your order.</p>;
+  }
+
   return (
     <div className="w-full lg:w-[300px]">
       <div className="box p-4 sticky top-10">
         {/* Place Order Button */}
         <button
+          onClick={handlePlaceOrder}
           className="w-full py-2 mb-4 rounded-md btn-primary text-sm font-normal shadow-sm"
         >
           Place your order
@@ -34,11 +119,17 @@ export default function OrderSummary({ cartItems = [], buyNowProduct = null }) {
         {/* Terms Notice */}
         <p className="text-[10px] text-gray-500 text-center mb-4 border-b border-gray-300 pb-4 leading-tight">
           By placing your order, you agree to Gadgets BD&apos;s{" "}
-          <a href="#" className="text-amazon-blue text-xs hover:underline hover:text-amazon-orange">
+          <a
+            href="#"
+            className="text-amazon-blue text-xs hover:underline hover:text-amazon-orange"
+          >
             privacy notice
           </a>{" "}
           and{" "}
-          <a href="#" className="text-amazon-blue text-xs hover:underline hover:text-amazon-orange">
+          <a
+            href="#"
+            className="text-amazon-blue text-xs hover:underline hover:text-amazon-orange"
+          >
             conditions of use
           </a>.
         </p>
