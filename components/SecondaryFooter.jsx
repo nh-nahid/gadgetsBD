@@ -1,7 +1,7 @@
 // components/Footer.jsx
 import React from "react";
 
-export default function CheckoutFooter() {
+export default function SecondaryFooter() {
   return (
     <footer className="bg-amazon-background py-10 border-t border-gray-300">
       <div className="checkout-container text-center text-[10px] text-gray-500 space-y-2">

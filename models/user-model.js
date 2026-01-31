@@ -1,6 +1,16 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 
+const addressSchema = new Schema({
+  name: { type: String, required: true },           // recipient name
+  street: { type: String, required: true },
+  city: { type: String, required: true },
+  postalCode: { type: String, required: true },
+  country: { type: String, required: true },
+  phone: { type: String, required: true },
+  isDefault: { type: Boolean, default: false },     // mark default shipping address
+}, { _id: false });
+
 const userSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -24,6 +34,9 @@ const userSchema = new Schema({
   resetTokenExpire: { type: Date, default: null },
 
   emailVerified: { type: Date, default: null },
+
+  // ----------------- NEW -----------------
+  addresses: { type: [addressSchema], default: [] }, // array of addresses
 }, { timestamps: true });
 
 // Hash password only if modified

@@ -53,6 +53,19 @@ export async function getAllProducts(options = {}) {
   return replaceMongoIdInArray(products);
 }
 
+
+export async function getProductById(productId) {
+  if (!productId) return null;
+
+  await dbConnect();
+
+  const product = await productModel.findById(productId).lean();
+
+  if (!product) return null;
+
+  return replaceMongoIdInObject(product);
+}
+
 /**
  * Get featured products with the highest purchase count
  * @param {number} limit
@@ -185,14 +198,47 @@ console.log(shop);
 // }
 
 export async function getUserByEmail(email) {
-    const users = await userModel.find({email: email}).lean();
-
-    return replaceMongoIdInObject(users[0]);
-    
+  const user = await userModel.findOne({ email }).lean();
+  if (!user) return null;
+  return replaceMongoIdInObject(user);
 }
+
 
 export async function getCartsByUser(userId) {
     const carts = await cartModel.find({userId: userId}).lean();
 
     return replaceMongoIdInArray(carts);
+}
+
+
+
+export async function getFullCartByUser(userId) {
+  if (!userId) throw new Error("userId is required");
+
+  await dbConnect();
+
+  // Fetch cart(s) for the user
+  const carts = await cartModel.find({ userId }).lean();
+
+  // Map through carts and clean up Mongo ObjectIds
+  const cleanedCarts = carts.map((cart) => {
+    const newCart = replaceMongoIdInObject(cart);
+
+
+    // Optionally: ensure productId in each item is string
+    if (newCart.items && Array.isArray(newCart.items)) {
+      newCart.items = newCart.items.map((item) => {
+        const newItem = replaceMongoIdInObject(item);
+
+        // productId can be ObjectId string
+        newItem.productId = newItem.productId.toString();
+
+        return newItem;
+      });
+    }
+
+    return newCart;
+  });
+
+  return cleanedCarts;
 }

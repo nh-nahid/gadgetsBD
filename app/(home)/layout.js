@@ -9,10 +9,10 @@ export const metadata = {
   description: "An e-commerce platform for gadgets",
 };
 
-export default function RootLayout({ children, auth }) {
+export default function HomeLayout({ children, auth }) {
   return (
-    <html lang="en">
-      <body className="bg-amazon-background text-amazon-text flex flex-col min-h-screen"
+    
+      <div className="bg-amazon-background text-amazon-text flex flex-col min-h-screen"
 
       >
         <SessionProvider>
@@ -21,7 +21,7 @@ export default function RootLayout({ children, auth }) {
         {children}
         <Footer />
         </SessionProvider>
-      </body>
-    </html>
+      </div>
+    
   );
 }

@@ -1,0 +1,32 @@
+"use client";
+
+import React from "react";
+import CheckoutSteps from "./CheckoutSteps";
+import OrderSummary from "./OrderSummary";
+
+export default function CheckoutMain({ cartItems = [], buyNowProduct = null, userAddress=null }) {
+  // Merge Buy Now product at the top of the list
+ 
+  
+  const productsToShow = buyNowProduct
+    ? [buyNowProduct, ...cartItems.filter(item => item.id !== buyNowProduct.id)]
+    : cartItems;
+
+  if (!productsToShow.length) {
+    return <p className="text-center py-10">Your cart is empty.</p>;
+  }
+
+
+  
+  return (
+    <main className="checkout-container flex-1 py-10 px-4 flex flex-col lg:flex-row gap-8">
+      {/* LEFT: Checkout Steps */}
+      <div className="flex-1 space-y-6">
+        <CheckoutSteps cartItems={productsToShow} buyNowProduct={buyNowProduct} userAddress={userAddress} />
+      </div>
+
+      {/* RIGHT: Order Summary */}
+      <OrderSummary cartItems={productsToShow} buyNowProduct={buyNowProduct} />
+    </main>
+  );
+}
