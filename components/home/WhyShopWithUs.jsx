@@ -1,3 +1,5 @@
+import { CreditCard, Headphones, ShieldCheck, Truck } from "lucide-react";
+
 const WhyShopWithUs = () => {
     return (
        <>
@@ -14,10 +16,8 @@ const WhyShopWithUs = () => {
               <div
                 className="w-16 h-16 bg-amazon-yellow rounded-full flex items-center justify-center mx-auto mb-4"
               >
-                <i
-                  data-lucide="truck"
-                  className="w-8 h-8 text-amazon"
-                ></i>
+                <Truck className="w-8 h-8 text-amazon"/>
+                
               </div>
               <h3 className="font-bold text-lg mb-2">
                 Fast Delivery
@@ -31,10 +31,8 @@ const WhyShopWithUs = () => {
               <div
                 className="w-16 h-16 bg-amazon-yellow rounded-full flex items-center justify-center mx-auto mb-4"
               >
-                <i
-                  data-lucide="shield-check"
-                  className="w-8 h-8 text-amazon"
-                ></i>
+                <ShieldCheck className="w-8 h-8 text-amazon"/>
+                
               </div>
               <h3 className="font-bold text-lg mb-2">
                 100% Authentic
@@ -48,10 +46,8 @@ const WhyShopWithUs = () => {
               <div
                 className="w-16 h-16 bg-amazon-yellow rounded-full flex items-center justify-center mx-auto mb-4"
               >
-                <i
-                  data-lucide="headphones"
-                  className="w-8 h-8 text-amazon"
-                ></i>
+                <Headphones className="w-8 h-8 text-amazon"/>
+                
               </div>
               <h3 className="font-bold text-lg mb-2">24/7 Support</h3>
               <p className="text-sm text-gray-600">
@@ -63,10 +59,8 @@ const WhyShopWithUs = () => {
               <div
                 className="w-16 h-16 bg-amazon-yellow rounded-full flex items-center justify-center mx-auto mb-4"
               >
-                <i
-                  data-lucide="credit-card"
-                  className="w-8 h-8 text-amazon"
-                ></i>
+                <CreditCard className="w-8 h-8 text-amazon"/>
+                
               </div>
               <h3 className="font-bold text-lg mb-2">
                 Secure Payment

@@ -109,6 +109,7 @@ const ProductDetailsPage = async ({ params }) => {
           stock={product.availability}
           deliveryText={product.deliveryText}
           freeDelivery={product.freeDelivery}
+          product={product}
         />
       </div>
 

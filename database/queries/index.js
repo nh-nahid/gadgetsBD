@@ -1,6 +1,8 @@
+import { cartModel } from "@/models/cart-model";
 import { productModel } from "@/models/product-model";
 import { reviewModel } from "@/models/review-model";
 import { shopModel } from "@/models/shop-model";
+import { userModel } from "@/models/user-model";
 import { dbConnect } from "@/services/mongo";
 import { replaceMongoIdInArray, replaceMongoIdInObject } from "@/utils/data-util";
 import mongoose from "mongoose";
@@ -167,4 +169,30 @@ console.log(slug);
 console.log(shop);
 
   return replaceMongoIdInObject(shop);
+}
+
+// async function findCart(productId) {
+//     const matches = await cartModel.find({productId: productId.toString()});
+
+//     const found = matches.find((match) => {
+//         return (
+//             isDateInBetween(checkin, match.checkin, match.checkout) ||
+//             isDateInBetween(checkout, match.checkin, match.checkout)
+//         )
+//     });
+
+//     return found;
+// }
+
+export async function getUserByEmail(email) {
+    const users = await userModel.find({email: email}).lean();
+
+    return replaceMongoIdInObject(users[0]);
+    
+}
+
+export async function getCartsByUser(userId) {
+    const carts = await cartModel.find({userId: userId}).lean();
+
+    return replaceMongoIdInArray(carts);
 }
