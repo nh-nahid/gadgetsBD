@@ -1,24 +1,19 @@
-import PaymentMethod from "./PaymentMethod";
+import React from "react";
+
 import ProductList from "./ProductList";
+import PaymentMethod from "./PaymentMethod";
 import ShippingAddress from "./ShipingAddress";
 
-
-
-export default function CheckoutSteps({ cartItems = [], buyNowProduct = null, userAddress= null, onQtyChange, userEmail, userId, onAddressChange }) {
-  
+export default function CheckoutSteps({ cartItems, buyNowProduct, userAddress, onQtyChange, userEmail, userId, onAddressChange }) {
   return (
     <>
-      
       <ShippingAddress 
-        address={userAddress} 
+        address={userAddress}
         userEmail={userEmail}
         userId={userId}
         onAddressChange={onAddressChange}
       />
-
-  
-      <ProductList cartItems={cartItems} buyNowProduct={buyNowProduct} onQtyChange={onQtyChange}/>
-
+      <ProductList cartItems={cartItems} buyNowProduct={buyNowProduct} onQtyChange={onQtyChange} />
       <PaymentMethod />
     </>
   );

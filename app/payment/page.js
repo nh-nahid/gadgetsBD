@@ -4,73 +4,62 @@ import React, { useEffect, useRef, useState } from "react";
 import CheckoutMain from "@/components/payment/CheckoutMain";
 import { useSession } from "next-auth/react";
 import { redirect, useSearchParams } from "next/navigation";
-import EditOrderModal from "@/components/payment/EditOrderModal"; // <-- new modal component
 
 const PaymentPage = () => {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const buyNowProductId = searchParams.get("productId");
   const buyNowQty = Number(searchParams.get("qty") || 1);
+
   const [cartItems, setCartItems] = useState([]);
   const [buyNowProduct, setBuyNowProduct] = useState(null);
   const [shippingAddress, setShippingAddress] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const hasFetched = useRef(false);
-
   const userId = session?.user?.id;
 
   if (status === "unauthenticated") redirect("/login");
 
   // ---------------- QUANTITY UPDATE ----------------
-const handleQtyChange = async (productId, qty) => {
-  // Update local state first
-  if (buyNowProduct?.productId === productId) {
-    setBuyNowProduct(prev => ({ ...prev, quantity: qty }));
-  } else {
-    setCartItems(prev =>
-      prev.map(item =>
-        String(item.productId) === String(productId)
-          ? { ...item, quantity: qty }
-          : item
-      )
-    );
-  }
+  const handleQtyChange = async (productId, qty) => {
+    if (buyNowProduct?.productId === productId) {
+      setBuyNowProduct(prev => ({ ...prev, quantity: qty }));
+    } else {
+      setCartItems(prev =>
+        prev.map(item =>
+          String(item.productId) === String(productId)
+            ? { ...item, quantity: qty }
+            : item
+        )
+      );
+    }
 
-  // Determine product info
-  let product;
-  if (buyNowProduct?.productId === productId) {
-    product = buyNowProduct;
-  } else {
-    product = cartItems.find(item => item.productId === productId);
-  }
+    // Persist to Mongo
+    let product =
+      buyNowProduct?.productId === productId
+        ? buyNowProduct
+        : cartItems.find(item => item.productId === productId);
+    if (!product) return;
 
-  if (!product) {
-    console.error("Product info not found for cart update");
-    return;
-  }
-
-  // Persist to Mongo
-  try {
-    await fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        productId,
-        quantity: qty,
-        title: product.name,
-        price: product.price,
-        shopName: product.seller || "Unknown",
-        image: product.image || "",
-      }),
-    });
-  } catch (err) {
-    console.error("Failed to update cart", err);
-  }
-};
-
+    try {
+      await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          productId,
+          quantity: qty,
+          title: product.name,
+          price: product.price,
+          shopName: product.seller || "Unknown",
+          image: product.image || "",
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to update cart", err);
+    }
+  };
 
   // ---------------- FETCH DATA ----------------
   useEffect(() => {
@@ -81,7 +70,6 @@ const handleQtyChange = async (productId, qty) => {
 
     const fetchData = async () => {
       setLoading(true);
-
       try {
         // 1️⃣ Fetch cart
         const resCart = await fetch(`/api/cart/${session.user.id}`);
@@ -97,16 +85,14 @@ const handleQtyChange = async (productId, qty) => {
             productId: item.productId || item.id,
             image: item.image || "",
             name: item.title,
-            seller: item.shopName
+            seller: item.shopName,
           }));
         }
 
         // Remove buy-now product from cart
         let filteredCart = items;
         if (buyNowProductId) {
-          filteredCart = items.filter(
-            item => item.productId !== buyNowProductId
-          );
+          filteredCart = items.filter(item => item.productId !== buyNowProductId);
         }
         setCartItems(filteredCart);
 
@@ -125,7 +111,7 @@ const handleQtyChange = async (productId, qty) => {
                 productData.images?.[0]?.url ||
                 "",
               seller: productData.shop?.shopName || "Unknown Seller",
-              quantity: buyNowQty
+              quantity: buyNowQty,
             });
           }
         }
@@ -150,42 +136,16 @@ const handleQtyChange = async (productId, qty) => {
   if (!cartItems.length && !buyNowProduct)
     return <p className="text-center py-10">Your cart is empty.</p>;
 
-
   return (
-    <>
-      <CheckoutMain
-        cartItems={cartItems}
-        buyNowProduct={buyNowProduct}
-        userAddress={shippingAddress}
-        onQtyChange={handleQtyChange}
-        userEmail={session.user.email}
-        userId={userId}
-        onAddressChange={setShippingAddress}
-      />
-
-      {/* ---------------- Edit Modal ---------------- */}
-      {isEditModalOpen && (
-        <EditOrderModal
-          cartItems={cartItems}
-          buyNowProduct={buyNowProduct}
-          shippingAddress={shippingAddress}
-          userEmail={session.user.email}   
-          onClose={() => setIsEditModalOpen(false)}
-          onQtyChange={handleQtyChange}
-          onAddressChange={setShippingAddress}
-          userId={userId}
-        />
-
-      )}
-
-      {/* Edit button */}
-      <button
-        onClick={() => setIsEditModalOpen(true)}
-        className="fixed bottom-6 right-6 bg-amazon-yellow hover:bg-amazon-yellow_hover text-black py-2 px-4 rounded shadow-md"
-      >
-        Edit Order Details
-      </button>
-    </>
+    <CheckoutMain
+      cartItems={cartItems}
+      buyNowProduct={buyNowProduct}
+      userAddress={shippingAddress}
+      onQtyChange={handleQtyChange}
+      userEmail={session.user.email}
+      userId={userId}
+      onAddressChange={setShippingAddress}
+    />
   );
 };
 

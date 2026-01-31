@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import EditAddressModal from "./EditAddressModal";
 
-
 export default function ShippingAddress({ address, userEmail, userId, onAddressChange }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
