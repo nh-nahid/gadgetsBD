@@ -1,5 +1,5 @@
 
-import "./globals.css";
+import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { SessionProvider } from "next-auth/react";
@@ -16,10 +16,10 @@ export default function RootLayout({ children, auth }) {
 
       >
         <SessionProvider>
-        
+        <Navbar />
         {auth}
         {children}
-        
+        <Footer />
         </SessionProvider>
       </body>
     </html>

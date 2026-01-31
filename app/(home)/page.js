@@ -14,7 +14,7 @@ export default async function Home() {
   const featuredProducts = products
     .filter((p) => p.purchaseCount > 0)
     .sort((a, b) => b.purchaseCount - a.purchaseCount)
-    .slice(0, 10); // top 10 featured
+    .slice(0, 10);
 
   return (
     <main className="flex-1 max-w-[1500px] mx-auto w-full">

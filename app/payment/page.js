@@ -1,11 +1,10 @@
+import Main from "@/components/payment/Main";
 
 
 const PaymentPage = () => {
     return (
-        <div>
-            
-        </div>
-    );
+            <Main />
+        );
 };
 
 export default PaymentPage;
