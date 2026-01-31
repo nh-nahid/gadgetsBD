@@ -3,11 +3,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import CheckoutMain from "@/components/payment/CheckoutMain";
 import { useSession } from "next-auth/react";
-import { redirect, useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+
+export const dynamic = "force-dynamic"; // Prevent static prerender
 
 const PaymentPage = () => {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const searchParams = useSearchParams();
+
   const buyNowProductId = searchParams.get("productId");
   const buyNowQty = Number(searchParams.get("qty") || 1);
 
@@ -19,7 +23,12 @@ const PaymentPage = () => {
   const hasFetched = useRef(false);
   const userId = session?.user?.id;
 
-  if (status === "unauthenticated") redirect("/login");
+  // ---------------- Redirect unauthenticated ----------------
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
 
   // ---------------- QUANTITY UPDATE ----------------
   const handleQtyChange = async (productId, qty) => {
@@ -35,11 +44,11 @@ const PaymentPage = () => {
       );
     }
 
-    // Persist to Mongo
-    let product =
+    const product =
       buyNowProduct?.productId === productId
         ? buyNowProduct
         : cartItems.find(item => item.productId === productId);
+
     if (!product) return;
 
     try {
@@ -61,17 +70,16 @@ const PaymentPage = () => {
     }
   };
 
-  // ---------------- FETCH DATA ----------------
+  // ---------------- FETCH CART, PRODUCT, AND ADDRESS ----------------
   useEffect(() => {
     if (status !== "authenticated" || !session?.user?.email) return;
     if (hasFetched.current) return;
-
     hasFetched.current = true;
 
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 1️⃣ Fetch cart
+        // 1️⃣ Fetch Cart
         const resCart = await fetch(`/api/cart/${session.user.id}`);
         let items = [];
         if (resCart.ok) {
@@ -90,11 +98,10 @@ const PaymentPage = () => {
         }
 
         // Remove buy-now product from cart
-        let filteredCart = items;
         if (buyNowProductId) {
-          filteredCart = items.filter(item => item.productId !== buyNowProductId);
+          items = items.filter(item => item.productId !== buyNowProductId);
         }
-        setCartItems(filteredCart);
+        setCartItems(items);
 
         // 2️⃣ Fetch Buy-Now product
         if (buyNowProductId) {
@@ -116,7 +123,7 @@ const PaymentPage = () => {
           }
         }
 
-        // 3️⃣ Fetch user address
+        // 3️⃣ Fetch User Address
         const resUser = await fetch(`/api/users/${session.user.email}`);
         if (resUser.ok) {
           const userData = await resUser.json();
@@ -130,7 +137,13 @@ const PaymentPage = () => {
     };
 
     fetchData();
-  }, [status, session?.user?.email, buyNowProductId, buyNowQty]);
+  }, [
+    status,
+    session?.user?.email,
+    session?.user?.id,
+    buyNowProductId,
+    buyNowQty,
+  ]);
 
   if (loading) return <p className="text-center py-10">Loading checkout...</p>;
   if (!cartItems.length && !buyNowProduct)
