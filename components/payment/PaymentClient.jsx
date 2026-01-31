@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import CheckoutMain from "@/components/payment/CheckoutMain";
+import EditOrderModal from "@/components/payment/EditOrderModal";
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import CheckoutMain from "./CheckoutMain";
+import { redirect, useSearchParams } from "next/navigation";
 
-export default function PaymentClient() {
+const PaymentClient = () => {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const buyNowProductId = searchParams.get("productId");
@@ -17,16 +17,54 @@ export default function PaymentClient() {
   const [buyNowProduct, setBuyNowProduct] = useState(null);
   const [shippingAddress, setShippingAddress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const hasFetched = useRef(false);
   const userId = session?.user?.id;
 
-  // 🔐 Redirect if not logged in
-  useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
-  }, [status, router]);
+  if (status === "unauthenticated") redirect("/login");
 
-  // 📦 Fetch checkout data
+  // ---------------- QUANTITY UPDATE ----------------
+  const handleQtyChange = async (productId, qty) => {
+    if (buyNowProduct?.productId === productId) {
+      setBuyNowProduct(prev => ({ ...prev, quantity: qty }));
+    } else {
+      setCartItems(prev =>
+        prev.map(item =>
+          String(item.productId) === String(productId)
+            ? { ...item, quantity: qty }
+            : item
+        )
+      );
+    }
+
+    const product =
+      buyNowProduct?.productId === productId
+        ? buyNowProduct
+        : cartItems.find(item => item.productId === productId);
+
+    if (!product) return;
+
+    try {
+      await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          productId,
+          quantity: qty,
+          title: product.name,
+          price: product.price,
+          shopName: product.seller || "Unknown",
+          image: product.image || "",
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to update cart", err);
+    }
+  };
+
+  // ---------------- FETCH DATA ----------------
   useEffect(() => {
     if (status !== "authenticated" || !session?.user?.email) return;
     if (hasFetched.current) return;
@@ -36,46 +74,48 @@ export default function PaymentClient() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 1️⃣ Cart
+        // 1️⃣ Fetch cart
         const resCart = await fetch(`/api/cart/${session.user.id}`);
         let items = [];
+
         if (resCart.ok) {
           const cartData = await resCart.json();
-          items = cartData.flatMap(c => c.items || []).map(item => ({
+          items = cartData.flatMap(cart => cart.items || []).map(item => ({
             ...item,
             productId: item.productId || item.id,
+            image: item.image || "",
             name: item.title,
             seller: item.shopName,
-            image: item.image || "",
           }));
         }
 
-        // Remove buy-now item from cart
-        if (buyNowProductId) {
-          items = items.filter(i => i.productId !== buyNowProductId);
-        }
-        setCartItems(items);
+        const filteredCart = buyNowProductId
+          ? items.filter(item => item.productId !== buyNowProductId)
+          : items;
 
-        // 2️⃣ Buy now product
+        setCartItems(filteredCart);
+
+        // 2️⃣ Fetch Buy-Now product
         if (buyNowProductId) {
           const resProduct = await fetch(`/api/products/${buyNowProductId}`);
           if (resProduct.ok) {
-            const p = await resProduct.json();
+            const productData = await resProduct.json();
             setBuyNowProduct({
-              productId: p.id,
-              name: p.title,
-              price: p.price,
-              quantity: buyNowQty,
+              id: productData.id,
+              productId: productData.id,
+              name: productData.title,
+              price: productData.price,
               image:
-                p.images?.find(img => img.isMain)?.url ||
-                p.images?.[0]?.url ||
+                productData.images?.find(img => img.isMain)?.url ||
+                productData.images?.[0]?.url ||
                 "",
-              seller: p.shop?.shopName || "Unknown Seller",
+              seller: productData.shop?.shopName || "Unknown Seller",
+              quantity: buyNowQty,
             });
           }
         }
 
-        // 3️⃣ Address
+        // 3️⃣ Fetch user address
         const resUser = await fetch(`/api/users/${session.user.email}`);
         if (resUser.ok) {
           const userData = await resUser.json();
@@ -89,19 +129,45 @@ export default function PaymentClient() {
     };
 
     fetchData();
-  }, [status, session?.user?.email, session?.user?.id, buyNowProductId, buyNowQty]);
+  }, [status, session?.user?.email, buyNowProductId, buyNowQty]);
 
   if (loading) return <p className="text-center py-10">Loading checkout...</p>;
+  if (!cartItems.length && !buyNowProduct)
+    return <p className="text-center py-10">Your cart is empty.</p>;
 
   return (
-    <CheckoutMain
-      cartItems={cartItems}
-      buyNowProduct={buyNowProduct}
-      userAddress={shippingAddress}
-      userEmail={session.user.email}
-      userId={userId}
-      onAddressChange={setShippingAddress}
-      onQtyChange={() => {}}
-    />
+    <>
+      <CheckoutMain
+        cartItems={cartItems}
+        buyNowProduct={buyNowProduct}
+        userAddress={shippingAddress}
+        onQtyChange={handleQtyChange}
+        userEmail={session.user.email}
+        userId={userId}
+        onAddressChange={setShippingAddress}
+      />
+
+      {isEditModalOpen && (
+        <EditOrderModal
+          cartItems={cartItems}
+          buyNowProduct={buyNowProduct}
+          shippingAddress={shippingAddress}
+          userEmail={session.user.email}
+          onClose={() => setIsEditModalOpen(false)}
+          onQtyChange={handleQtyChange}
+          onAddressChange={setShippingAddress}
+          userId={userId}
+        />
+      )}
+
+      <button
+        onClick={() => setIsEditModalOpen(true)}
+        className="fixed bottom-6 right-6 bg-amazon-yellow hover:bg-amazon-yellow_hover text-black py-2 px-4 rounded shadow-md"
+      >
+        Edit Order Details
+      </button>
+    </>
   );
-}
+};
+
+export default PaymentClient;
