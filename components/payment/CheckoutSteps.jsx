@@ -4,16 +4,21 @@ import ShippingAddress from "./ShipingAddress";
 
 
 
-export default function CheckoutSteps({ cartItems = [], buyNowProduct = null, userAddress= null, onQtyChange}) {
+export default function CheckoutSteps({ cartItems = [], buyNowProduct = null, userAddress= null, onQtyChange, userEmail, userId, onAddressChange }) {
+  
   return (
     <>
-      {/* Step 1: Shipping Address */}
-      <ShippingAddress address={userAddress} />
+      
+      <ShippingAddress 
+        address={userAddress} 
+        userEmail={userEmail}
+        userId={userId}
+        onAddressChange={onAddressChange}
+      />
 
-      {/* Step 2: Review Items */}
+  
       <ProductList cartItems={cartItems} buyNowProduct={buyNowProduct} onQtyChange={onQtyChange}/>
 
-      {/* Step 3: Payment Method */}
       <PaymentMethod />
     </>
   );

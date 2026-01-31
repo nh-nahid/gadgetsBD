@@ -11,7 +11,6 @@ const PaymentPage = () => {
   const searchParams = useSearchParams();
   const buyNowProductId = searchParams.get("productId");
   const buyNowQty = Number(searchParams.get("qty") || 1);
-
   const [cartItems, setCartItems] = useState([]);
   const [buyNowProduct, setBuyNowProduct] = useState(null);
   const [shippingAddress, setShippingAddress] = useState(null);
@@ -159,6 +158,9 @@ const handleQtyChange = async (productId, qty) => {
         buyNowProduct={buyNowProduct}
         userAddress={shippingAddress}
         onQtyChange={handleQtyChange}
+        userEmail={session.user.email}
+        userId={userId}
+        onAddressChange={setShippingAddress}
       />
 
       {/* ---------------- Edit Modal ---------------- */}

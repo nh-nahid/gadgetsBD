@@ -5,7 +5,7 @@ import CheckoutSteps from "./CheckoutSteps";
 import OrderSummary from "./OrderSummary";
 
 
-export default function CheckoutMain({ cartItems = [], buyNowProduct = null, userAddress=null, onQtyChange }) {
+export default function CheckoutMain({ cartItems = [], buyNowProduct = null, userAddress=null, onQtyChange , userEmail, userId, onAddressChange}) {
 
   
   const productsToShow = buyNowProduct
@@ -22,7 +22,15 @@ export default function CheckoutMain({ cartItems = [], buyNowProduct = null, use
     <main className="checkout-container flex-1 py-10 px-4 flex flex-col lg:flex-row gap-8">
       {/* LEFT: Checkout Steps */}
       <div className="flex-1 space-y-6">
-        <CheckoutSteps cartItems={productsToShow} buyNowProduct={buyNowProduct} userAddress={userAddress} onQtyChange={onQtyChange}/>
+        <CheckoutSteps 
+        cartItems={productsToShow} 
+        buyNowProduct={buyNowProduct}
+        userEmail={userEmail}
+        userId={userId}
+        onAddressChange={onAddressChange}
+        userAddress={userAddress} 
+        onQtyChange={onQtyChange}
+        />
       </div>
 
 

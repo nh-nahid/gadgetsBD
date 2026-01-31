@@ -33,7 +33,7 @@ export default function OrderSummary({ cartItems = [], buyNowProduct = null }) {
 
         {/* Terms Notice */}
         <p className="text-[10px] text-gray-500 text-center mb-4 border-b border-gray-300 pb-4 leading-tight">
-          By placing your order, you agree to Gadgets BD's{" "}
+          By placing your order, you agree to Gadgets BD&apos;s{" "}
           <a href="#" className="text-amazon-blue text-xs hover:underline hover:text-amazon-orange">
             privacy notice
           </a>{" "}
