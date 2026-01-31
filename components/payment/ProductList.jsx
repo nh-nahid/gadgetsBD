@@ -1,6 +1,6 @@
 import ProductItem from "./ProductItem";
 
-export default function ProductList({ cartItems = [], buyNowProduct = null }) {
+export default function ProductList({ cartItems = [], buyNowProduct = null, onQtyChange }) {
   const productsToShow = buyNowProduct
     ? [buyNowProduct, ...cartItems.filter(item => item.id !== buyNowProduct.id)]
     : cartItems;
@@ -17,7 +17,12 @@ export default function ProductList({ cartItems = [], buyNowProduct = null }) {
       </div>
       <div className="box p-4 space-y-4">
         {productsToShow.map(product => (
-          <ProductItem key={product.id} product={product} />
+          <ProductItem
+            key={product.productId || product.id}
+            product={product}
+            onQtyChange={onQtyChange}
+          />
+
         ))}
       </div>
     </div>

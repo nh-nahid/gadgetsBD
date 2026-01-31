@@ -4,9 +4,9 @@ import React from "react";
 import CheckoutSteps from "./CheckoutSteps";
 import OrderSummary from "./OrderSummary";
 
-export default function CheckoutMain({ cartItems = [], buyNowProduct = null, userAddress=null }) {
-  // Merge Buy Now product at the top of the list
- 
+
+export default function CheckoutMain({ cartItems = [], buyNowProduct = null, userAddress=null, onQtyChange }) {
+
   
   const productsToShow = buyNowProduct
     ? [buyNowProduct, ...cartItems.filter(item => item.id !== buyNowProduct.id)]
@@ -22,8 +22,9 @@ export default function CheckoutMain({ cartItems = [], buyNowProduct = null, use
     <main className="checkout-container flex-1 py-10 px-4 flex flex-col lg:flex-row gap-8">
       {/* LEFT: Checkout Steps */}
       <div className="flex-1 space-y-6">
-        <CheckoutSteps cartItems={productsToShow} buyNowProduct={buyNowProduct} userAddress={userAddress} />
+        <CheckoutSteps cartItems={productsToShow} buyNowProduct={buyNowProduct} userAddress={userAddress} onQtyChange={onQtyChange}/>
       </div>
+
 
       {/* RIGHT: Order Summary */}
       <OrderSummary cartItems={productsToShow} buyNowProduct={buyNowProduct} />

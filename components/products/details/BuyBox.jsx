@@ -1,18 +1,16 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 export default function BuyBox({ product }) {
-
-
   const { data: session } = useSession();
   const [quantity, setQuantity] = useState(1);
+  const [originalQty, setOriginalQty] = useState(1); // Track original quantity
   const [inCart, setInCart] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
 
   // ---------------- SYNC CART STATE ----------------
   useEffect(() => {
@@ -24,11 +22,15 @@ export default function BuyBox({ product }) {
         if (!res.ok) return;
 
         const cart = await res.json();
-        const exists = cart?.items?.some(
+        const existingItem = cart?.items?.find(
           (item) => item.productId.toString() === product.id
         );
 
-        if (exists) setInCart(true);
+        if (existingItem) {
+          setInCart(true);
+          setQuantity(existingItem.quantity);
+          setOriginalQty(existingItem.quantity);
+        }
       } catch (err) {
         console.error("Failed to sync cart", err);
       }
@@ -37,8 +39,14 @@ export default function BuyBox({ product }) {
     checkCart();
   }, [session?.user?.id, product.id]);
 
-  // ---------------- ADD OR UPDATE CART ----------------
-  const handleAddToCart = async () => {
+  // ---------------- HANDLE QUANTITY CHANGE ----------------
+  const handleQuantityChange = (e) => {
+    const selectedQty = Math.min(Number(e.target.value), product.stock);
+    setQuantity(selectedQty);
+  };
+
+  // ---------------- ADD / UPDATE CART ----------------
+  const handleCartAction = async () => {
     if (!session?.user?.id) {
       alert("Please login to add items to your cart.");
       return;
@@ -72,9 +80,10 @@ export default function BuyBox({ product }) {
 
       if (res.ok) {
         setInCart(true);
+        setOriginalQty(quantity);
       } else {
         const data = await res.text();
-        alert("Failed to add product: " + data);
+        alert("Failed to add/update product: " + data);
       }
     } catch (err) {
       console.error(err);
@@ -83,7 +92,6 @@ export default function BuyBox({ product }) {
       setLoading(false);
     }
   };
-
 
   // ---------------- REMOVE FROM CART ----------------
   const handleRemoveFromCart = async () => {
@@ -101,19 +109,18 @@ export default function BuyBox({ product }) {
         }),
       });
 
-      if (res.ok) setInCart(false);
-      else alert("Failed to remove product");
+      if (res.ok) {
+        setInCart(false);
+        setQuantity(1);
+        setOriginalQty(1);
+      } else {
+        alert("Failed to remove product");
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
-
-  // ---------------- HANDLE QUANTITY CHANGE ----------------
-  const handleQuantityChange = (e) => {
-    const selectedQty = Math.min(Number(e.target.value), product.stock);
-    setQuantity(selectedQty);
   };
 
   // ---------------- BUY NOW ----------------
@@ -132,6 +139,23 @@ export default function BuyBox({ product }) {
       `/payment?buyNow=true&productId=${product.id}&qty=${quantity}`
     );
   };
+
+  // ---------------- DETERMINE CART BUTTON ----------------
+  const cartButtonLabel = !inCart
+    ? "Add to Cart"
+    : quantity !== originalQty
+    ? "Update Cart"
+    : "In Cart";
+
+  const cartButtonDisabled =
+    loading || product.stock === 0 || (inCart && quantity === originalQty);
+
+  const cartButtonColor = !inCart
+    ? "bg-amazon-yellow hover:bg-amazon-yellow_hover border-amazon-secondary"
+    : quantity !== originalQty
+    ? "bg-green-500 hover:bg-green-600 border-green-500 text-white"
+    : "bg-gray-300 text-gray-600 border-gray-300";
+
   return (
     <div className="lg:col-span-3 border border-gray-200 rounded p-4">
       <div className="text-3xl text-amazon-orange mb-2">৳{product.price}</div>
@@ -151,7 +175,7 @@ export default function BuyBox({ product }) {
           className="border border-gray-300 rounded px-3 py-1 text-sm w-20"
           value={quantity}
           onChange={handleQuantityChange}
-          disabled={product.stock === 0} // disable if no stock
+          disabled={product.stock === 0}
         >
           {Array.from({ length: Math.min(product.stock, 10) }, (_, i) => i + 1).map(
             (n) => (
@@ -161,23 +185,25 @@ export default function BuyBox({ product }) {
         </select>
       </div>
 
-      {/* 🔥 TOGGLE BUTTON */}
+      {/* 🔥 ADD / UPDATE CART BUTTON */}
       <button
-        onClick={inCart ? handleRemoveFromCart : handleAddToCart}
-        disabled={loading || product.stock === 0} // disable if no stock
-        className={`w-full py-2 rounded-md shadow-sm mb-2 text-sm font-medium border ${inCart
-            ? "bg-red-500 text-white border-red-500"
-            : "bg-amazon-yellow hover:bg-amazon-yellow_hover border-amazon-secondary"
-          }`}
+        onClick={handleCartAction}
+        disabled={cartButtonDisabled}
+        className={`w-full py-2 rounded-md shadow-sm mb-2 text-sm font-medium border ${cartButtonColor}`}
       >
-        {loading
-          ? "Processing..."
-          : inCart
-            ? "Remove from Cart"
-            : product.stock === 0
-              ? "Out of Stock"
-              : "Add to Cart"}
+        {loading ? "Processing..." : cartButtonLabel}
       </button>
+
+      {/* 🔥 REMOVE BUTTON */}
+      {inCart && quantity === originalQty && (
+        <button
+          onClick={handleRemoveFromCart}
+          disabled={loading}
+          className="w-full py-2 rounded-md shadow-sm mb-2 text-sm font-medium border bg-red-500 hover:bg-red-600 text-white border-red-500"
+        >
+          Remove from Cart
+        </button>
+      )}
 
       <button
         onClick={buyNow}
