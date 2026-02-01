@@ -16,12 +16,21 @@ import { notFound } from "next/navigation";
 const ProductDetailsPage = async ({ params }) => {
   const { slug } = params;
 
-  // Fetch product
+  // Fetch main product
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  // Fetch related products
-  const relatedProducts = await getFeaturedProducts(6);
+  // Fetch related products (limit 6)
+  const relatedProductsData = await getFeaturedProducts(6);
+  const relatedProducts = relatedProductsData
+    .filter((p) => p.id !== product.id) // exclude current product
+    .map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      price: p.price,
+      images: p.images || [],
+    }));
 
   // Breadcrumbs
   const breadcrumbs = [
@@ -33,7 +42,7 @@ const ProductDetailsPage = async ({ params }) => {
   ].filter(Boolean);
 
   // Images
-  const mainImage = product.images?.find((img) => img.isMain)?.url || product.images?.[0]?.url;
+  const mainImage = product.images?.find((img) => img.isMain)?.url || product.images?.[0]?.url || "/placeholder.png";
   const thumbnails = product.images?.map((img) => img.url) || [];
 
   // UI product for BuyBox / ProductInfo
@@ -41,26 +50,26 @@ const ProductDetailsPage = async ({ params }) => {
     name: product.title,
     storeName: product.shop.shopName,
     storeLink: `/shops/${product.shop.shopId}`,
-    ratingsCount: product.totalReviews,
+    ratingsCount: product.totalReviews || 0,
     price: `৳${product.price.toLocaleString()}`,
-    features: product.features,
+    features: product.features || [],
     category: product.category,
     brand: product.brand,
     stock: `${product.stock} units available`,
   };
 
-  // Fetch reviews (first page)
+  // Fetch first 5 reviews
   const reviewsData = await getReviewsByProductId({ productId: product.id, limit: 5 });
   const reviews = reviewsData.map((review, index) => ({
     id: review.id,
-    initials: review.initials || "U",
+    initials: review.initials || (review.name ? review.name.charAt(0).toUpperCase() : "U"),
     name: review.name || "Verified Buyer",
     rating: review.rating,
     title: review.title || `Review ${index + 1}`,
     date: review.date ? new Date(review.date).toLocaleDateString() : "",
     comment: review.comment,
     verified: review.verified ?? true,
-    userId: review.userId, // optional for client logic
+    userId: review.userId, // needed for client-side edit/delete logic
   }));
 
   // Fetch shop info
@@ -91,30 +100,34 @@ const ProductDetailsPage = async ({ params }) => {
 
   return (
     <main className="flex-1 max-w-[1500px] mx-auto w-full p-4">
+      {/* Breadcrumbs */}
       <Breadcrumbs paths={breadcrumbs} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Product main section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
         <ProductGallery mainImage={mainImage} thumbnails={thumbnails} />
         <ProductInfo product={uiProduct} />
         <BuyBox
           price={`৳${product.price.toLocaleString()}`}
-          stock={product.availability}
+          stock={product.availability || product.stock}
           deliveryText={product.deliveryText}
           freeDelivery={product.freeDelivery}
           product={product}
         />
       </div>
 
+      {/* Product tabs (description, features, reviews) */}
       <div className="mt-12">
         <ProductTabs
           description={product.description}
           features={product.features}
           reviews={reviews}
           shop={shop}
-          productId={product.id} // ReviewsTab can handle POST & purchase checks
+          productId={product.id} // ReviewsTab uses this for POST/edit/delete
         />
       </div>
 
+      {/* Related Products */}
       <RelatedProducts products={relatedProducts} />
     </main>
   );
