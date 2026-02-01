@@ -1,7 +1,7 @@
-// pages/api/buyNow.js
+
 import { productModel } from "@/models/product-model";
 import { dbConnect } from "@/services/mongo";
-import mongoose from "mongoose";
+
 
 export default async function handler(req, res) {
   await dbConnect();

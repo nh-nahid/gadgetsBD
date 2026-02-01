@@ -1,5 +1,5 @@
 import Link from "next/link";
-import StarRating from "./StarRating";
+import StarRating from "./StarRatingAll";
 
 export default function ProductInfo({ product }) {
   const hasStoreLink =

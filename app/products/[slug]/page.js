@@ -9,8 +9,7 @@ import {
   getProductBySlug,
   getFeaturedProducts,
   getReviewsByProductId,
-  getShopByIdOrSlug,
-  getShopById
+  getShopById,
 } from "@/database/queries";
 import { notFound } from "next/navigation";
 
@@ -28,18 +27,13 @@ const ProductDetailsPage = async ({ params }) => {
   const breadcrumbs = [
     { label: "Home", href: "/" },
     product.category
-      ? {
-          label: product.category,
-          href: `/products?category=${encodeURIComponent(product.category)}`,
-        }
+      ? { label: product.category, href: `/products?category=${encodeURIComponent(product.category)}` }
       : null,
     { label: product.title },
   ].filter(Boolean);
 
   // Images
-  const mainImage =
-    product.images?.find((img) => img.isMain)?.url ||
-    product.images?.[0]?.url;
+  const mainImage = product.images?.find((img) => img.isMain)?.url || product.images?.[0]?.url;
   const thumbnails = product.images?.map((img) => img.url) || [];
 
   // UI product for BuyBox / ProductInfo
@@ -55,21 +49,22 @@ const ProductDetailsPage = async ({ params }) => {
     stock: `${product.stock} units available`,
   };
 
-  // Fetch reviews
+  // Fetch reviews (first page)
   const reviewsData = await getReviewsByProductId({ productId: product.id, limit: 5 });
   const reviews = reviewsData.map((review, index) => ({
-    initials: review.userInitials || "U",
-    name: review.userName || "Verified Buyer",
+    id: review.id,
+    initials: review.initials || "U",
+    name: review.name || "Verified Buyer",
     rating: review.rating,
     title: review.title || `Review ${index + 1}`,
     date: review.date ? new Date(review.date).toLocaleDateString() : "",
-    content: review.comment,
+    comment: review.comment,
+    verified: review.verified ?? true,
+    userId: review.userId, // optional for client logic
   }));
 
-  // Fetch shop from DB (dynamic, works for ObjectId or string _id)
+  // Fetch shop info
   const shopData = await getShopById(product.shop.shopId);
-
-  // Map shop fields to frontend
   const shop = shopData
     ? {
         name: shopData.shopName,
@@ -77,15 +72,12 @@ const ProductDetailsPage = async ({ params }) => {
         rating: shopData.rating ?? 0,
         reviewCount: shopData.reviewCount ?? 0,
         productsCount: shopData.productsCount ?? 0,
-        joined: shopData.joinedAt
-          ? new Date(shopData.joinedAt).toLocaleDateString()
-          : "—",
+        joined: shopData.joinedAt ? new Date(shopData.joinedAt).toLocaleDateString() : "—",
         responseTime: shopData.responseTime || "Within 2 hours",
         policies: shopData.policies || [],
         link: shopData.id ? `/shops/${shopData.id}` : null,
       }
     : {
-        // fallback to embedded product shop info
         name: product.shop.shopName,
         description: "",
         rating: 0,
@@ -118,8 +110,8 @@ const ProductDetailsPage = async ({ params }) => {
           description={product.description}
           features={product.features}
           reviews={reviews}
-          shop={shop} // pass dynamic, fully normalized shop data
-          productId={product.id}
+          shop={shop}
+          productId={product.id} // ReviewsTab can handle POST & purchase checks
         />
       </div>
 

@@ -25,7 +25,7 @@ export default async function Home() {
       </div>
 
       <WhyShopWithUs />
-      <PopularCategories />
+      <PopularCategories products={products} />
       <ShopByBrand />
     </main>
   );

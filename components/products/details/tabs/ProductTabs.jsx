@@ -5,9 +5,8 @@ import DescriptionTab from "./DescriptionTab";
 import ReviewsTab from "./ReviewsTabs";
 import ShopInfoTab from "./ShopInfoTab";
 
-export default function ProductTabs({ description, features, reviews, shop }) {
+export default function ProductTabs({ description, features, reviews, shop, productId, canReview }) {
   const [activeTab, setActiveTab] = useState("description");
-console.log(shop);
 
   return (
     <div className="mt-12">
@@ -52,7 +51,15 @@ console.log(shop);
         {activeTab === "description" && (
           <DescriptionTab description={description} features={features} />
         )}
-        {activeTab === "reviews" && <ReviewsTab reviews={reviews} />}
+
+        {activeTab === "reviews" && (
+          <ReviewsTab
+            productId={productId}    
+            reviews={reviews}        
+            canReview={canReview}    
+          />
+        )}
+
         {activeTab === "shop" && <ShopInfoTab shop={shop} />}
       </div>
     </div>

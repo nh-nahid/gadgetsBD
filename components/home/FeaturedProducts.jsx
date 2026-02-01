@@ -11,7 +11,7 @@ const FeaturedProducts = async () => {
   if (!products || products.length === 0) return null;
 
   const visibleProducts = products.slice(0, MAX_VISIBLE);
-  const hasMore = products.length > MAX_VISIBLE;
+  const hasMore = true;
 
   return (
     <div className="mt-8 bg-white p-6 shadow-sm">

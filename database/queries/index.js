@@ -5,76 +5,48 @@ import { reviewModel } from "@/models/review-model";
 import { shopModel } from "@/models/shop-model";
 import { userModel } from "@/models/user-model";
 import { dbConnect } from "@/services/mongo";
-import { replaceMongoIdInArray, replaceMongoIdInObject } from "@/utils/data-util";
 import mongoose from "mongoose";
 import mongoClientPromise from "../mongoClientPromise";
+import { replaceMongoIdInArray, replaceMongoIdInObject } from "@/utils/data-util";
 
-/**
- * Fetch all active products from the database
- * @param {Object} options
- *  - limit: number of products to return (optional)
- *  - sortBy: 'featured' | 'price-asc' | 'price-desc' | 'rating' | 'newest' (optional)
- */
+await dbConnect();
+
+/* ======================
+   Products
+====================== */
 export async function getAllProducts(options = {}) {
-  await dbConnect();
-
   const { limit, sortBy } = options;
 
-  // Base query
   let query = productModel.find({ isActive: true }).lean();
 
-  // Sorting
   if (sortBy) {
     switch (sortBy) {
-      case "price-asc":
-        query = query.sort({ price: 1 });
-        break;
-      case "price-desc":
-        query = query.sort({ price: -1 });
-        break;
-      case "rating":
-        query = query.sort({ averageRating: -1 });
-        break;
-      case "newest":
-        // Use createdAt if exists, otherwise fallback to ObjectId timestamp
-        query = query.sort({ createdAt: -1 });
-        break;
-      case "featured":
-      default:
-        // keep default DB order
-        break;
+      case "price-asc": query = query.sort({ price: 1 }); break;
+      case "price-desc": query = query.sort({ price: -1 }); break;
+      case "rating": query = query.sort({ averageRating: -1 }); break;
+      case "newest": query = query.sort({ createdAt: -1 }); break;
+      case "featured": default: break;
     }
   }
 
-  // Apply limit
   if (limit) query = query.limit(limit);
 
   const products = await query;
-
-  // Replace _id with id and ensure all necessary fields exist
   return replaceMongoIdInArray(products);
 }
 
-
 export async function getProductById(productId) {
   if (!productId) return null;
-
-  await dbConnect();
-
   const product = await productModel.findById(productId).lean();
-
-  if (!product) return null;
-
-  return replaceMongoIdInObject(product);
+  return product ? replaceMongoIdInObject(product) : null;
 }
 
-/**
- * Get featured products with the highest purchase count
- * @param {number} limit
- */
-export async function getFeaturedProducts(limit = 6) {
-  await dbConnect();
+export async function getProductBySlug(slug) {
+  const product = await productModel.findOne({ slug, isActive: true }).lean();
+  return product ? replaceMongoIdInObject(product) : null;
+}
 
+export async function getFeaturedProducts(limit = 6) {
   const products = await productModel
     .find({ isActive: true, purchaseCount: { $gt: 0 } })
     .sort({ purchaseCount: -1 })
@@ -84,29 +56,15 @@ export async function getFeaturedProducts(limit = 6) {
   return replaceMongoIdInArray(products);
 }
 
-
-export async function getProductBySlug(slug) {
-  await dbConnect();
-
-  const product = await productModel
-    .findOne({ slug, isActive: true })
-    .lean();
-
-  if (!product) return null;
-
-  return replaceMongoIdInObject(product);
-}
-
-
-
+/* ======================
+   Reviews
+====================== */
 export async function getReviewsByProductId({ productId, limit = 5, skip = 0 }) {
   if (!productId) throw new Error("productId is required");
 
-  await dbConnect();
-
   const reviews = await reviewModel
-    .find({ productId, hidden: false }) // only visible reviews
-    .sort({ createdAt: -1 })           // latest first
+    .find({ productId, hidden: false })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
@@ -114,163 +72,98 @@ export async function getReviewsByProductId({ productId, limit = 5, skip = 0 }) 
   return replaceMongoIdInArray(reviews);
 }
 
-/**
- * Fetch total review count for a product
- * @param {string} productId
- */
 export async function getReviewCount(productId) {
   if (!productId) throw new Error("productId is required");
-
-  await dbConnect();
-
   return reviewModel.countDocuments({ productId, hidden: false });
 }
 
-
+/* ======================
+   Shops
+====================== */
 export async function getAllShops(options = {}) {
-  await dbConnect();
-
   const { limit, sortBy } = options;
 
   let query = shopModel.find().lean();
 
   if (sortBy) {
     switch (sortBy) {
-      case "rating":
-        query = query.sort({ rating: -1 });
-        break;
-      case "newest":
-        query = query.sort({ createdAt: -1 });
-        break;
-      default:
-        break;
+      case "rating": query = query.sort({ rating: -1 }); break;
+      case "newest": query = query.sort({ createdAt: -1 }); break;
+      default: break;
     }
   }
 
   if (limit) query = query.limit(limit);
 
   const shops = await query;
-
   return replaceMongoIdInArray(shops);
 }
 
-/**
- * Get a single shop by ID
- * @param {string} shopId
- */
-
-
 export async function getShopById(shopId) {
-  await dbConnect();
   if (!shopId) return null;
-
-  // Query by string _id if _id in DB is string
-  const shop = await shopModel.findOne({ _id: shopId }).lean();
-  
+  const shop = await shopModel.findById(shopId).lean();
   return shop ? replaceMongoIdInObject(shop) : null;
 }
 
-
-/**
- * Get a single shop by slug
- * @param {string} slug
- */
 export async function getShopBySlug(slug) {
-  await dbConnect();
-console.log(slug);
-
+  if (!slug) return null;
   const shop = await shopModel.findOne({ shopSlug: slug }).lean();
-  if (!shop) return null;
-console.log(shop);
-
-  return replaceMongoIdInObject(shop);
+  return shop ? replaceMongoIdInObject(shop) : null;
 }
 
-// async function findCart(productId) {
-//     const matches = await cartModel.find({productId: productId.toString()});
-
-//     const found = matches.find((match) => {
-//         return (
-//             isDateInBetween(checkin, match.checkin, match.checkout) ||
-//             isDateInBetween(checkout, match.checkin, match.checkout)
-//         )
-//     });
-
-//     return found;
-// }
-
+/* ======================
+   Users
+====================== */
 export async function getUserByEmail(email) {
+  if (!email) return null;
   const user = await userModel.findOne({ email }).lean();
-  if (!user) return null;
-  return replaceMongoIdInObject(user);
+  return user ? replaceMongoIdInObject(user) : null;
 }
 
-
+/* ======================
+   Cart
+====================== */
 export async function getCartsByUser(userId) {
-    const carts = await cartModel.find({userId: userId}).lean();
-
-    return replaceMongoIdInArray(carts);
+  if (!userId) return [];
+  const carts = await cartModel.find({ userId }).lean();
+  return replaceMongoIdInArray(carts);
 }
-
-
 
 export async function getFullCartByUser(userId) {
   if (!userId) throw new Error("userId is required");
-
-  await dbConnect();
-
-  // Fetch cart(s) for the user
   const carts = await cartModel.find({ userId }).lean();
 
-  // Map through carts and clean up Mongo ObjectIds
-  const cleanedCarts = carts.map((cart) => {
+  return carts.map((cart) => {
     const newCart = replaceMongoIdInObject(cart);
-
-
-    // Optionally: ensure productId in each item is string
-    if (newCart.items && Array.isArray(newCart.items)) {
+    if (newCart.items?.length) {
       newCart.items = newCart.items.map((item) => {
         const newItem = replaceMongoIdInObject(item);
-
-        // productId can be ObjectId string
         newItem.productId = newItem.productId.toString();
-
         return newItem;
       });
     }
-
     return newCart;
   });
-
-  return cleanedCarts;
 }
 
-
+/* ======================
+   Orders
+====================== */
 export async function getOrderById(orderId) {
   if (!orderId) return null;
-
-  await dbConnect();
-
   const order = await orderModel.findById(orderId).lean();
-  if (!order) return null;
-
-  return replaceMongoIdInObject(order);
+  return order ? replaceMongoIdInObject(order) : null;
 }
-
 
 export async function getOrdersByUser(userId) {
   if (!userId) return [];
-
-  await dbConnect();
-
   const orders = await orderModel.find({ userId }).sort({ createdAt: -1 }).lean();
-
   return replaceMongoIdInArray(orders);
 }
 
-
-
-
+/* ======================
+   Most Purchased Products
+====================== */
 export async function getMostPurchasedProducts(limit = 10) {
   const client = await mongoClientPromise;
   const db = client.db();
@@ -307,4 +200,3 @@ export async function getMostPurchasedProducts(limit = 10) {
 
   return aggregation.map(p => replaceMongoIdInObject(p));
 }
-

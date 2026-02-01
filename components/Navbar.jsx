@@ -10,7 +10,6 @@ import SearchFilter from "./search/SearchFilter";
 const Navbar = () => {
   const { data: session, status, update } = useSession();
 
-
   useEffect(() => {
     const handler = () => update();
     window.addEventListener("auth-changed", handler);
