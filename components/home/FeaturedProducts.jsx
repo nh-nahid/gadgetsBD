@@ -2,13 +2,12 @@ import Link from "next/link";
 import FeaturedProductCard from "./FeaturedProductCard";
 import { getFeaturedProducts } from "@/database/queries";
 
-const MAX_VISIBLE = 6;
+const MAX_VISIBLE = 5;
 
 const FeaturedProducts = async () => {
-  // ✅ Server-side fetch
+
   const products = await getFeaturedProducts(6);
 
-  // ❌ Hide section if no featured products
   if (!products || products.length === 0) return null;
 
   const visibleProducts = products.slice(0, MAX_VISIBLE);

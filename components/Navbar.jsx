@@ -1,24 +1,26 @@
-"use client"; // client component
+"use client";
 
 import { useSession } from "next-auth/react";
-import { Search, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect } from "react";
 import Logout from "./auth/Logout";
 import SearchFilter from "./search/SearchFilter";
 
 const Navbar = () => {
-
-const { data: session } = useSession();
-console.log(session?.user);          // user info
-console.log(session?.accessToken);   // access token
-console.log(session?.refreshToken);  // refresh token
+  const { data: session, status, update } = useSession();
 
 
+  useEffect(() => {
+    const handler = () => update();
+    window.addEventListener("auth-changed", handler);
+    return () => window.removeEventListener("auth-changed", handler);
+  }, [update]);
+
+  if (status === "loading") return null;
 
   return (
     <nav className="bg-amazon text-white">
-      {/* Top Nav */}
       <div className="max-w-[1500px] mx-auto flex items-center p-2 gap-4">
         {/* Logo */}
         <Link
@@ -33,7 +35,6 @@ console.log(session?.refreshToken);  // refresh token
 
         <SearchFilter />
 
-        {/* Right Actions */}
         <div className="flex items-center gap-4">
           {/* Language */}
           <div className="hidden md:flex items-center hover:outline hover:outline-1 hover:outline-white rounded-sm p-1 cursor-pointer">
@@ -52,7 +53,9 @@ console.log(session?.refreshToken);  // refresh token
               href="/login"
               className="hover:outline hover:outline-1 hover:outline-white rounded-sm p-1 cursor-pointer"
             >
-              <div className="text-xs leading-none text-gray-300">Hello, Sign in</div>
+              <div className="text-xs leading-none text-gray-300">
+                Hello, Sign in
+              </div>
               <div className="font-bold text-sm">Account & Lists</div>
             </Link>
           )}

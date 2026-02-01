@@ -1,7 +1,9 @@
+// app/api/orders/[orderId]/route.js
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/services/mongo";
 import orderModel from "@/models/order-model";
 import { sendInvoiceEmail } from "@/lib/sendInvoiceEmail";
+import { generateInvoicePDF } from "@/lib/invoice";
 
 /**
  * GET /api/orders/[orderId]
@@ -60,7 +62,6 @@ export async function POST(req) {
     await dbConnect();
     const body = await req.json();
 
-    // Validation
     if (!body.userId || !body.items?.length || !body.shippingAddress) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -68,10 +69,9 @@ export async function POST(req) {
       );
     }
 
-    // Generate unique order number
     const orderNumber = `GB-${Date.now()}`;
 
-    // Create order document
+    // 1️⃣ CREATE ORDER FIRST (this must never fail because of PDF)
     const order = await orderModel.create({
       userId: body.userId,
       items: body.items.map(item => ({
@@ -92,15 +92,36 @@ export async function POST(req) {
       orderNumber,
     });
 
-    // Send invoice email (if email provided)
-    if (body.userEmail) {
-      await sendInvoiceEmail({ ...order.toObject(), userEmail: body.userEmail });
-    }
+    // 2️⃣ INVOICE + EMAIL (NON-BLOCKING)
+    (async () => {
+      try {
+        const pdfBuffer = await generateInvoicePDF(order.toObject());
 
+        if (body.userEmail) {
+          await sendInvoiceEmail({
+            to: body.userEmail,
+            subject: `Invoice for your Order ${orderNumber}`,
+            text: "Thank you for your order! Please find your invoice attached.",
+            attachments: [
+              {
+                filename: `invoice-${orderNumber}.pdf`,
+                content: pdfBuffer,
+              },
+            ],
+          });
+        }
+      } catch (err) {
+        // IMPORTANT: log only, never throw
+        console.error("Invoice/email failed (non-blocking):", err);
+      }
+    })();
+
+    // 3️⃣ ALWAYS RETURN SUCCESS
     return NextResponse.json(
       { success: true, orderId: order._id, orderNumber },
       { status: 201 }
     );
+
   } catch (err) {
     console.error("Order POST API error:", err);
     return NextResponse.json(

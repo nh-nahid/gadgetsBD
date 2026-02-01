@@ -12,51 +12,57 @@ export default function RegisterForm() {
   const isOwner = role === "SHOP_OWNER";
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const password = form.password.value;
-    const passwordConfirm = form.passwordConfirm.value;
+  e.preventDefault();
+  e.stopPropagation(); // <-- prevents any bubbling native form submit
 
-    if (password !== passwordConfirm) {
-      alert("Passwords do not match");
-      return;
-    }
+  const form = e.target;
+  const password = form.password.value;
+  const passwordConfirm = form.passwordConfirm.value;
 
-    if (password.length < 6) {
-      alert("Password must be at least 6 characters");
-      return;
-    }
+  if (password !== passwordConfirm) {
+    alert("Passwords do not match");
+    return;
+  }
 
-    const data = {
-      name: form.name.value,
-      email: form.email.value,
-      password,
-      role,
-      shopName: isOwner ? form.shopName.value : null,
-      mobile: form.mobile.value,
-    };
+  if (password.length < 6) {
+    alert("Password must be at least 6 characters");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const result = await res.json();
-      setLoading(false);
-
-      if (res.ok) {
-        router.push(role === "SHOP_OWNER" ? "/profile" : "/login");
-      } else {
-        alert(result.error || "Something went wrong");
-      }
-    } catch (error) {
-      setLoading(false);
-      alert(error.message || "Server error");
-    }
+  const data = {
+    name: form.name.value,
+    email: form.email.value,
+    password,
+    role,
+    shopName: isOwner ? form.shopName.value : null,
+    mobile: form.mobile.value,
   };
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    const result = await res.json();
+    setLoading(false);
+
+    if (!res.ok) {
+      alert(result.error || "Something went wrong");
+      return;
+    }
+
+    // SPA-friendly navigation
+    router.replace(role === "SHOP_OWNER" ? "/profile" : "/login");
+  } catch (err) {
+    setLoading(false);
+    alert(err.message || "Server error");
+  }
+};
+
 
   return (
     <div className="bg-white text-amazon-text flex flex-col min-h-screen items-center pt-8">

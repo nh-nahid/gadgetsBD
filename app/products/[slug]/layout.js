@@ -1,7 +1,4 @@
 import "../../globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { SessionProvider } from "next-auth/react";
 
 export const metadata = {
   title: "gadgetsBD",
@@ -15,11 +12,10 @@ export default function RootLayout({ children, auth }) {
 
       >
       
-        <Navbar />
+        
         {auth}
         {children}
-        <Footer />
-
+        
       </div>
    
   );

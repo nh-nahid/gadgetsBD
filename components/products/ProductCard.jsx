@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 // components/products/ProductCard.jsx
 export default function ProductCard({ product }) {
@@ -7,7 +8,7 @@ export default function ProductCard({ product }) {
   const emptyStars = 5 - ratingStars;
 
   return (
-    <a
+    <Link
       href={`/products/${product.slug}`}
       className="flex gap-4 p-4 border rounded hover:shadow-md transition"
     >
@@ -53,6 +54,6 @@ export default function ProductCard({ product }) {
           {product.features.slice(0, 3).join(" | ")}
         </p>
       </div>
-    </a>
+    </Link>
   );
 }

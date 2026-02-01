@@ -1,10 +1,9 @@
 // app/api/orders/[orderId]/invoice/route.js
 import { NextResponse } from "next/server";
-import PDFDocument from "pdfkit/js/pdfkit"; // <- use the JS build directly
-import fs from "fs";
-import path from "path";
 import { dbConnect } from "@/services/mongo";
 import orderModel from "@/models/order-model";
+import { generateInvoicePDF } from "@/lib/invoice";
+
 
 export async function GET(req, { params }) {
   try {
@@ -13,6 +12,7 @@ export async function GET(req, { params }) {
     const { orderId } = params;
     console.log("Invoice API called with params:", { orderId });
 
+    // Fetch the order
     const order = await orderModel.findOne({ orderNumber: orderId }).lean();
     if (!order) {
       return NextResponse.json(
@@ -22,54 +22,10 @@ export async function GET(req, { params }) {
     }
     console.log("Order found:", order.orderNumber);
 
-    // Use TTF font
-    const fontPath = path.join(process.cwd(), "app/fonts/Arial.ttf");
-    console.log("Checking font path:", fontPath);
-    if (!fs.existsSync(fontPath)) {
-      console.log("Font missing!");
-      return NextResponse.json(
-        { success: false, message: "Font not found" },
-        { status: 500 }
-      );
-    }
+    // Generate PDF using the reusable function
+    const pdfBuffer = await generateInvoicePDF(order);
 
-    // Create PDF with TTF, disable default fonts
-    const doc = new PDFDocument({
-      size: "A4",
-      margin: 50,
-      font: fontPath,   // set TTF font here
-    });
-
-    const chunks = [];
-    doc.font(fontPath);
-
-    doc.fontSize(20).text("Invoice", { align: "center" });
-    doc.moveDown();
-
-    doc.fontSize(12).text(`Order Number: ${order.orderNumber}`);
-    doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`);
-    doc.text(`Customer: ${order.shippingAddress.name}`);
-    doc.moveDown();
-
-    doc.text("Items:", { underline: true });
-    order.items.forEach((item) => {
-      doc.text(`${item.title} - ${item.quantity} x $${item.price}`);
-    });
-    doc.moveDown();
-
-    doc.text("Summary:", { underline: true });
-    doc.text(`Subtotal: $${order.summary.subtotal}`);
-    doc.text(`Delivery Fee: $${order.summary.deliveryFee}`);
-    doc.text(`Service Fee: $${order.summary.serviceFee}`);
-    doc.text(`Total: $${order.summary.total}`);
-
-    doc.end();
-
-    for await (const chunk of doc) {
-      chunks.push(chunk);
-    }
-    const pdfBuffer = Buffer.concat(chunks);
-
+    // Return the PDF as a downloadable file
     return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {

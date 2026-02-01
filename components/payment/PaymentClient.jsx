@@ -25,7 +25,7 @@ const PaymentClient = () => {
   if (status === "unauthenticated") redirect("/login");
 
   // ---------------- QUANTITY UPDATE ----------------
-  const handleQtyChange = async (productId, qty) => {
+  const handleQtyChange = (productId, qty) => {
     if (buyNowProduct?.productId === productId) {
       setBuyNowProduct(prev => ({ ...prev, quantity: qty }));
     } else {
@@ -37,38 +37,19 @@ const PaymentClient = () => {
         )
       );
     }
+  };
 
-    const product =
-      buyNowProduct?.productId === productId
-        ? buyNowProduct
-        : cartItems.find(item => item.productId === productId);
-
-    if (!product) return;
-
-    try {
-      await fetch("/api/cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          productId,
-          quantity: qty,
-          title: product.name,
-          price: product.price,
-          shopName: product.seller || "Unknown",
-          image: product.image || "",
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to update cart", err);
-    }
+  // ---------------- REMOVE ITEM ----------------
+  const handleRemoveItem = (productId) => {
+    // Update UI instantly
+    setCartItems(prev => prev.filter(item => item.productId !== productId));
+    setBuyNowProduct(prev => (prev?.productId === productId ? null : prev));
   };
 
   // ---------------- FETCH DATA ----------------
   useEffect(() => {
     if (status !== "authenticated" || !session?.user?.email) return;
     if (hasFetched.current) return;
-
     hasFetched.current = true;
 
     const fetchData = async () => {
@@ -77,7 +58,6 @@ const PaymentClient = () => {
         // 1️⃣ Fetch cart
         const resCart = await fetch(`/api/cart/${session.user.id}`);
         let items = [];
-
         if (resCart.ok) {
           const cartData = await resCart.json();
           items = cartData.flatMap(cart => cart.items || []).map(item => ({
@@ -92,7 +72,6 @@ const PaymentClient = () => {
         const filteredCart = buyNowProductId
           ? items.filter(item => item.productId !== buyNowProductId)
           : items;
-
         setCartItems(filteredCart);
 
         // 2️⃣ Fetch Buy-Now product
@@ -157,6 +136,7 @@ const PaymentClient = () => {
           onQtyChange={handleQtyChange}
           onAddressChange={setShippingAddress}
           userId={userId}
+          onRemoveItem={handleRemoveItem} // sync with modal
         />
       )}
 

@@ -13,36 +13,39 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+ async function onSubmit(e) {
+  e.preventDefault();
+  e.stopPropagation();
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
+  setError("");
+  setLoading(true);
 
-    try {
-      const response = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-      });
+  const formData = new FormData(e.currentTarget);
+  const email = formData.get("email");
+  const password = formData.get("password");
 
-      setLoading(false);
+  try {
+    const response = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+      callbackUrl: "/",
+    });
 
-      if (response.error) {
-        setError(response.error || "Login failed");
-      } else {
-        // Successful login
-        router.push("/");
-      }
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-      setError("Something went wrong. Please try again.");
+    setLoading(false);
+
+    if (response?.error) {
+      setError(response.error);
+    } else {
+      window.dispatchEvent(new Event("auth-changed"));
+      router.replace("/");
     }
+  } catch (err) {
+    console.error(err);
+    setLoading(false);
+    setError("Something went wrong. Please try again.");
   }
+}
 
   return (
     <div className="bg-white text-amazon-text flex flex-col min-h-screen items-center pt-8">
@@ -106,9 +109,8 @@ const LoginForm = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className={`w-full py-1.5 a-button-primary text-sm font-medium rounded-sm cursor-pointer ${
-              loading ? "opacity-70 cursor-not-allowed" : ""
-            }`}
+            className={`w-full py-1.5 a-button-primary text-sm font-medium rounded-sm cursor-pointer ${loading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
             disabled={loading}
           >
             {loading ? "Signing in..." : "Sign in"}
