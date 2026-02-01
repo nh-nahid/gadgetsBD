@@ -7,6 +7,7 @@ import { userModel } from "@/models/user-model";
 import { dbConnect } from "@/services/mongo";
 import { replaceMongoIdInArray, replaceMongoIdInObject } from "@/utils/data-util";
 import mongoose from "mongoose";
+import mongoClientPromise from "../mongoClientPromise";
 
 /**
  * Fetch all active products from the database
@@ -266,3 +267,44 @@ export async function getOrdersByUser(userId) {
 
   return replaceMongoIdInArray(orders);
 }
+
+
+
+
+export async function getMostPurchasedProducts(limit = 10) {
+  const client = await mongoClientPromise;
+  const db = client.db();
+
+  const aggregation = await db.collection("orders").aggregate([
+    { $unwind: "$items" },
+    { $group: { _id: "$items.productId", totalSold: { $sum: "$items.quantity" } } },
+    { $sort: { totalSold: -1 } },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "products",
+        localField: "_id",
+        foreignField: "_id",
+        as: "product"
+      }
+    },
+    { $unwind: "$product" },
+    {
+      $project: {
+        _id: "$product._id",
+        title: "$product.title",
+        slug: "$product.slug",
+        price: "$product.price",
+        images: "$product.images",
+        stock: "$product.stock",
+        shop: "$product.shop",
+        deliveryText: "$product.deliveryText",
+        freeDelivery: "$product.freeDelivery",
+        totalSold: 1,
+      }
+    }
+  ]).toArray();
+
+  return aggregation.map(p => replaceMongoIdInObject(p));
+}
+

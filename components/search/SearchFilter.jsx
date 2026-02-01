@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { slugify } from "@/utils/slugify";
-import { debounce } from "lodash"; // install lodash if you don't have it
+import { debounce } from "lodash"; 
 
 const categories = ["All", "Laptops", "Phones", "Accessories", "Gaming"];
 
@@ -22,7 +22,7 @@ const SearchFilter = () => {
       params.set("category", slugify(selectedCategory));
 
     router.push(`/products?${params.toString()}`);
-  }, 500);
+  }, 800);
 
   // Run debounced search on input/category change
   useEffect(() => {

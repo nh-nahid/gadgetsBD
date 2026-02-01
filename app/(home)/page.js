@@ -5,16 +5,12 @@ import PopularCategories from "@/components/home/PopularCategories";
 import ShopByBrand from "@/components/home/ShopByBrand";
 import WhyShopWithUs from "@/components/home/WhyShopWithUs";
 
-import { getAllProducts } from "@/database/queries";
+import { getAllProducts, getMostPurchasedProducts } from "@/database/queries";
 
 export default async function Home() {
   const products = await getAllProducts();
 
-
-  const featuredProducts = products
-    .filter((p) => p.purchaseCount > 0)
-    .sort((a, b) => b.purchaseCount - a.purchaseCount)
-    .slice(0, 10);
+  const featuredProducts = await getMostPurchasedProducts(10);
 
   return (
     <main className="flex-1 max-w-[1500px] mx-auto w-full">
