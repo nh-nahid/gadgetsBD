@@ -1,13 +1,43 @@
 import mongoose from "mongoose";
 
 const OrderItemSchema = new mongoose.Schema({
-  productId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    required: true,
+  },
+
   title: String,
   image: String,
   price: Number,
   quantity: Number,
+
   seller: String,
+
+  shopOwnerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: false,
+  },
+
+  status: {
+    type: String,
+    enum: [
+      "pending",
+      "confirmed",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ],
+    default: "pending",
+  },
+
+  reviewGiven: {
+    type: Boolean,
+    default: false,
+  },
 });
+
 
 const AddressSchema = new mongoose.Schema({
   name: String,
@@ -32,7 +62,11 @@ const OrderSchema = new mongoose.Schema(
 
     payment: {
       method: { type: String, default: "Card" },
-      status: { type: String, enum: ["pending", "paid"], default: "paid" },
+      status: {
+        type: String,
+        enum: ["pending", "paid"],
+        default: "paid",
+      },
       transactionId: String,
     },
 
@@ -48,14 +82,22 @@ const OrderSchema = new mongoose.Schema(
       unique: true,
     },
 
+    // overall order status (derived / helper)
     status: {
       type: String,
-      enum: ["processing", "shipped", "delivered"],
-      default: "processing",
+      enum: [
+        "pending",
+        "confirmed",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ],
+      default: "pending",
     },
   },
   { timestamps: true }
 );
+
 
 export default mongoose.models.Order ||
   mongoose.model("Order", OrderSchema);

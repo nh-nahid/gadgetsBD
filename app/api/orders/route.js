@@ -4,6 +4,7 @@ import { dbConnect } from "@/services/mongo";
 import orderModel from "@/models/order-model";
 import { sendInvoiceEmail } from "@/lib/sendInvoiceEmail";
 import { generateInvoicePDF } from "@/lib/invoice";
+import { productModel } from "@/models/product-model";
 
 /**
  * GET /api/orders/[orderId]
@@ -57,49 +58,62 @@ export async function GET(req, { params }) {
  * POST /api/orders
  * Create a new order and optionally send invoice email
  */
+
 export async function POST(req) {
   try {
     await dbConnect();
     const body = await req.json();
 
-    if (!body.userId || !body.items?.length || !body.shippingAddress) {
+    const { userId, userEmail, items, shippingAddress, summary, payment } = body;
+
+    if (!userId || !items?.length || !shippingAddress) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
 
+    // ---------------- FETCH PRODUCTS & BUILD ORDER ITEMS ----------------
+  const orderItems = await Promise.all(
+  items.map(async (item) => {
+    const product = await productModel.findById(item.productId).lean();
+    if (!product) throw new Error(`Product not found: ${item.productId}`);
+
+    return {
+      productId: item.productId,
+      title: product.title,
+      image: product.images[0]?.url || "",
+      price: Number(product.price),
+      quantity: Number(item.quantity),
+      seller: product.shop.shopName || "Unknown",
+      shopOwnerId: product.shop.shopId, // ✅ use shopId, not shopOwnerId
+    };
+  })
+);
+
+
     const orderNumber = `GB-${Date.now()}`;
 
-    // 1️⃣ CREATE ORDER FIRST (this must never fail because of PDF)
     const order = await orderModel.create({
-      userId: body.userId,
-      items: body.items.map(item => ({
-        productId: item.productId,
-        title: item.title,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity,
-        seller: item.seller || "Unknown",
-      })),
-      shippingAddress: body.shippingAddress,
-      summary: body.summary,
+      userId,
+      items: orderItems,
+      shippingAddress,
+      summary,
       payment: {
-        method: body.payment?.method || "Card",
-        status: body.payment?.status || "paid",
-        transactionId: body.payment?.transactionId || null,
+        method: payment?.method || "Card",
+        status: payment?.status || "paid",
+        ...payment,
       },
       orderNumber,
     });
 
-    // 2️⃣ INVOICE + EMAIL (NON-BLOCKING)
+    // ---------------- NON-BLOCKING: Generate invoice & send email ----------------
     (async () => {
       try {
         const pdfBuffer = await generateInvoicePDF(order.toObject());
-
-        if (body.userEmail) {
+        if (userEmail) {
           await sendInvoiceEmail({
-            to: body.userEmail,
+            to: userEmail,
             subject: `Invoice for your Order ${orderNumber}`,
             text: "Thank you for your order! Please find your invoice attached.",
             attachments: [
@@ -111,17 +125,14 @@ export async function POST(req) {
           });
         }
       } catch (err) {
-        // IMPORTANT: log only, never throw
         console.error("Invoice/email failed (non-blocking):", err);
       }
     })();
 
-    // 3️⃣ ALWAYS RETURN SUCCESS
     return NextResponse.json(
       { success: true, orderId: order._id, orderNumber },
       { status: 201 }
     );
-
   } catch (err) {
     console.error("Order POST API error:", err);
     return NextResponse.json(
@@ -130,3 +141,4 @@ export async function POST(req) {
     );
   }
 }
+

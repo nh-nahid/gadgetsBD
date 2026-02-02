@@ -11,7 +11,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from ".
 
 await dbConnect();
 
-export const { handlers: { GET, POST } } = NextAuth({
+export const { handlers: { GET, POST }, auth } = NextAuth({
   adapter: MongoDBAdapter(mongoClientPromise, { databaseName: process.env.ENVIRONMENT }),
   session: { strategy: "jwt" },
 

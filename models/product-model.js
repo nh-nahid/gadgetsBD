@@ -2,19 +2,29 @@ import mongoose, { Schema } from "mongoose";
 
 const reviewSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "users" },
+    userId: { type: Schema.Types.ObjectId, ref: "users", required: true },
     rating: { type: Number, min: 1, max: 5, required: true },
-    comment: String,
+    comment: { type: String, default: "" },
   },
   { timestamps: true }
 );
+
+const imageSchema = new Schema({
+  url: { type: String, required: true },
+  isMain: { type: Boolean, default: false },
+});
+
+const shopSchema = new Schema({
+  shopOwnerId: { type: Schema.Types.ObjectId, ref: "users", required: true }, // this will be used in orders
+  shopName: { type: String, required: true },
+  isOfficial: { type: Boolean, default: false },
+});
 
 const productSchema = new Schema(
   {
     // 🔹 Basic info
     title: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, index: true },
-
     description: { type: String, required: true },
     features: [{ type: String }],
 
@@ -32,23 +42,10 @@ const productSchema = new Schema(
     brand: { type: String, required: true },
 
     // 🔹 Images
-    images: [
-      {
-        url: { type: String, required: true },
-        isMain: { type: Boolean, default: false },
-      },
-    ],
+    images: [imageSchema],
 
     // 🔹 Shop info
-    shop: {
-      shopId: {
-        type: Schema.Types.ObjectId,
-        ref: "shops",
-        required: true,
-      },
-      shopName: { type: String, required: true },
-      isOfficial: { type: Boolean, default: false },
-    },
+    shop: shopSchema,
 
     // 🔹 Delivery & policy
     freeDelivery: { type: Boolean, default: true },
@@ -61,7 +58,7 @@ const productSchema = new Schema(
     averageRating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
 
-    // 🔹 Purchase tracking (🔥 Featured products logic)
+    // 🔹 Purchase tracking
     purchaseCount: { type: Number, default: 0 },
 
     // 🔹 Flags
@@ -70,8 +67,7 @@ const productSchema = new Schema(
   { timestamps: true }
 );
 
-
-/// ✅ Auto calculations
+// ---------------- Auto Calculations ----------------
 productSchema.pre("save", function (next) {
   // Stock sync
   this.isInStock = this.stock > 0;
@@ -87,6 +83,12 @@ productSchema.pre("save", function (next) {
   }
 
   next();
+});
+
+// ---------------- Virtual for shopOwnerId ----------------
+// This makes it easy to access shopOwnerId when creating orders
+productSchema.virtual("shopOwnerId").get(function () {
+  return this.shop?.shopOwnerId;
 });
 
 export const productModel =
