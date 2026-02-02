@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata = {
-  title: "gadgetsBD",
+  title: "GadgetsBD",
   description: "An e-commerce platform for gadgets",
 };
 

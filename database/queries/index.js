@@ -157,6 +157,16 @@ export async function getOrderByNumber(orderNumber) {
   return order ? replaceMongoIdInObject(order) : null;
 }
 
+export async function getOrderById(orderId) {
+  if (!orderId) return null;
+
+  // Find by MongoDB _id
+  const order = await orderModel.findById(orderId).lean();
+
+  // Replace _id fields with id in nested objects if needed
+  return order ? replaceMongoIdInObject(order) : null;
+}
+
 export async function getOrdersByUser(userId) {
   if (!userId) return [];
   const orders = await orderModel.find({ userId }).sort({ createdAt: -1 }).lean();

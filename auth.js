@@ -8,8 +8,34 @@ import bcrypt from "bcryptjs";
 import { dbConnect } from "./services/mongo";
 import { replaceMongoIdInObject } from "@/utils/data-util";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "./lib/token";
+import { ObjectId } from "mongodb";
 
 await dbConnect();
+
+// Helper to link OAuth account in NextAuth accounts collection
+async function linkOAuthAccount(existingUser, account) {
+  const client = await mongoClientPromise;
+  const db = client.db(process.env.ENVIRONMENT);
+
+  await db.collection("accounts").updateOne(
+    { provider: account.provider, providerAccountId: account.providerAccountId },
+    {
+      $set: {
+        userId: existingUser._id || new ObjectId(existingUser.id),
+        type: account.type,
+        provider: account.provider,
+        providerAccountId: account.providerAccountId,
+        access_token: account.access_token || null,
+        refresh_token: account.refresh_token || null,
+        scope: account.scope || null,
+        token_type: account.token_type || null,
+        expires_at: account.expires_at || null,
+        id_token: account.id_token || null,
+      },
+    },
+    { upsert: true }
+  );
+}
 
 export const { handlers: { GET, POST }, auth } = NextAuth({
   adapter: MongoDBAdapter(mongoClientPromise, { databaseName: process.env.ENVIRONMENT }),
@@ -28,7 +54,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         const valid = await bcrypt.compare(credentials.password, user.password);
         if (!valid) throw new Error("Invalid credentials");
 
-        if (user.isOAuth) { 
+        if (user.isOAuth) {
           user.isOAuth = false;
           await user.save();
         }
@@ -48,26 +74,35 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account.provider === "google") {
-        const existingUser = await userModel.findOne({ email: profile.email });
+        let existingUser = await userModel.findOne({ email: profile.email });
 
-        if (existingUser) {
-          // Link Google account
-          const client = await mongoClientPromise;
-          const db = client.db(process.env.ENVIRONMENT);
-          await db.collection("accounts").updateOne(
-            { provider: "google", providerAccountId: profile.sub },
-            { $set: { userId: existingUser._id, access_token: account.access_token || null } },
-            { upsert: true }
-          );
-
-          await userModel.updateOne({ _id: existingUser._id }, { $set: { isOAuth: true, name: profile.name, image: profile.picture } });
-          user = replaceMongoIdInObject(existingUser);
-          user.name = profile.name;
-          user.image = profile.picture;
-        } else {
-          user.id = user.id || user._id?.toString();
+        if (!existingUser) {
+          // Create new user if not exists
+          existingUser = await userModel.create({
+            name: profile.name,
+            email: profile.email,
+            image: profile.picture,
+            role: "USER",
+            mobile: null,
+            shopName: null,
+            addresses: [],
+            isOAuth: true,
+            emailVerified: profile.email_verified ? new Date() : null,
+          });
         }
+
+        // Link OAuth account in accounts collection
+        await linkOAuthAccount(existingUser, account);
+
+        user = replaceMongoIdInObject(existingUser);
+        user.name = profile.name;
+        user.image = profile.picture;
+        user.role = existingUser.role || "USER";
+        user.mobile = existingUser.mobile || null;
+        user.shopName = existingUser.shopName || null;
+        user.addresses = existingUser.addresses || [];
       }
+
       return true;
     },
 
@@ -76,11 +111,21 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         const userId = user._id?.toString() || user.id;
 
         const accessToken = generateAccessToken({ userId, role: user.role });
-        const refreshToken = account.type === "credentials" ? generateRefreshToken({ userId }) : account.refresh_token || null;
+        const refreshToken =
+          account.type === "credentials"
+            ? generateRefreshToken({ userId })
+            : account.refresh_token || null;
 
-        if (refreshToken) await userModel.updateOne({ _id: user._id }, { $set: { refreshToken } });
+        if (refreshToken)
+          await userModel.updateOne({ _id: user._id }, { $set: { refreshToken } });
 
-        return { ...token, user, accessToken, refreshToken, accessTokenExpires: Date.now() + 30 * 60 * 1000 };
+        return {
+          ...token,
+          user,
+          accessToken,
+          refreshToken,
+          accessTokenExpires: Date.now() + 30 * 60 * 1000,
+        };
       }
 
       if (Date.now() < (token.accessTokenExpires || 0)) return token;
@@ -92,6 +137,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
       } catch {
         token.error = "RefreshTokenExpired";
       }
+
       return token;
     },
 

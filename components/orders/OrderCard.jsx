@@ -11,6 +11,12 @@ const OrderCard = ({ order, role }) => {
   const orderTotal = order.summary?.total?.toLocaleString("en-US") || "0";
   const shipTo = order.shippingAddress?.name || "N/A";
 
+  // URL depends on role
+  const orderLink =
+    role === "SHOP_OWNER"
+      ? `/orders/${order._id}`        // shop owner uses _id
+      : `/orders/${order.orderNumber}`; // user uses orderNumber
+
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
       {/* Header */}
@@ -36,7 +42,7 @@ const OrderCard = ({ order, role }) => {
 
         <div className="text-right">
           <div className="uppercase tracking-tighter mb-1">Order # {order.orderNumber}</div>
-          <Link href={`/orders/${ order.orderNumber}`} className="text-amazon-blue hover:underline">
+          <Link href={orderLink} className="text-amazon-blue hover:underline">
             View order details
           </Link>
         </div>
@@ -46,12 +52,12 @@ const OrderCard = ({ order, role }) => {
       <div className="p-6 space-y-6">
         {order.items.map((product, idx) => (
           <OrderProduct
-            key={product._id || idx}
+            key={product._id?.toString() || idx}
             product={product}
             isFirst={idx === 0}
             role={role}
-            orderId={order._id || order.id}
-            orderNumber={order.orderNumber}
+            orderId={order._id?.toString()}        // always internal _id for updates
+            orderNumber={order.orderNumber}        // used for invoice & user links
           />
         ))}
       </div>

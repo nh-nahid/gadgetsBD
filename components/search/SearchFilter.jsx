@@ -22,7 +22,7 @@ const SearchFilter = () => {
       params.set("category", slugify(selectedCategory));
 
     router.push(`/products?${params.toString()}`);
-  }, 800);
+  }, 1000);
 
   // Run debounced search on input/category change
   useEffect(() => {

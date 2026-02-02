@@ -70,7 +70,6 @@ export default function RegisterForm() {
       <div className="w-full max-w-[400px] p-6 a-box mb-6">
         <h1 className="text-2xl font-normal mb-4">Create account</h1>
 
-        {/* Role selection */}
         <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-sm">
           <button
             type="button"
@@ -202,7 +201,8 @@ export default function RegisterForm() {
         </form>
 
         {/* Google Sign Up */}
-        <div className="mt-4 flex justify-center gap-2 items-center text-sm">
+        { role === "USER" && (
+          <div className="mt-4 flex justify-center gap-2 items-center text-sm">
           <span>or continue with</span>
           <button
             type="button"
@@ -219,6 +219,8 @@ export default function RegisterForm() {
             Google
           </button>
         </div>
+        ) }
+        
       </div>
     </div>
   );

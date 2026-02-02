@@ -36,7 +36,6 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
         try {
           const res = await fetch(`/api/reviews?productId=${product.productId}`);
           const data = await res.json();
-          // Only mark existing review if the order is delivered
           const myReview =
             productStatus === "delivered"
               ? data.reviews?.find((r) => r.userId === userId)
@@ -65,6 +64,7 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
       if (res.ok) {
         setProductStatus("cancelled");
         alert("Order cancelled successfully!");
+        router.refresh(); // refresh orders list if user goes back
       } else {
         alert(data.message || "Failed to cancel order");
       }
@@ -123,6 +123,7 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
       if (res.ok) {
         setProductStatus(newStatus);
         alert("Status updated successfully!");
+        router.refresh(); // <-- refresh the page to sync data with server
       } else {
         alert(data.message || "Failed to update status");
       }

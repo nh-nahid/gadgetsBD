@@ -3,28 +3,34 @@ import OrderProduct from "@/components/orders/OrderProduct";
 import OrderInvoiceButton from "@/components/orders/OrderInvoiceButton";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import {  getOrderByNumber } from "@/database/queries";
-
+import { getOrderByNumber, getOrderById } from "@/database/queries";
 
 const statusOrder = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
 export default async function OrderDetailsPage({ params }) {
-  const { orderNumber } = params;
-
+  const { orderNumber } = params; // This param is either orderNumber (user) or _id (shop owner)
+  
   const session = await auth();
   const userId = session?.user?.id;
   const role = session?.user?.role;
 
-  const order = await getOrderByNumber(orderNumber);
-console.log("detaisl order", order);
+  let order;
+
+  if (role === "SHOP_OWNER") {
+    // Shop owner: fetch by _id
+    order = await getOrderById(orderNumber);
+  } else {
+    // User: fetch by orderNumber
+    order = await getOrderByNumber(orderNumber);
+  }
 
   if (!order) {
     redirect("/orders");
   }
 
-
+  // Users can only see their own orders
   if (role === "USER" && String(order.userId) !== String(userId)) {
-    redirect("/orders"); 
+    redirect("/orders");
   }
 
   return (
@@ -37,6 +43,7 @@ console.log("detaisl order", order);
         </p>
       </div>
 
+      {/* Total & Invoice */}
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-600">Total: BDT {order.summary?.total}</p>
         {role === "USER" && <OrderInvoiceButton orderId={order.orderNumber} />}
@@ -67,9 +74,7 @@ console.log("detaisl order", order);
               <span className="text-xs mt-1 capitalize">{status}</span>
               {idx < statusOrder.length - 1 && (
                 <div
-                  className={`flex-1 h-1 mt-2 ${
-                    completed ? "bg-green-500" : "bg-gray-300"
-                  }`}
+                  className={`flex-1 h-1 mt-2 ${completed ? "bg-green-500" : "bg-gray-300"}`}
                 />
               )}
             </div>
@@ -85,11 +90,12 @@ console.log("detaisl order", order);
             product={{
               ...product,
               productId: product.productId,
-              name: product.title, 
+              name: product.title,
             }}
             isFirst={index === 0}
             role={role}
-            orderNumber={orderNumber}
+            orderId={order.id}        // Needed for shop owner status updates
+            orderNumber={order.orderNumber} // Needed for invoice download
           />
         ))}
       </div>
