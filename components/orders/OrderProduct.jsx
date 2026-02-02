@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle, Truck, XCircle } from "lucide-react";
+import { CheckCircle, Truck, XCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -27,6 +27,7 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
   const [existingReview, setExistingReview] = useState(null);
   const [loadingReview, setLoadingReview] = useState(true);
   const [productStatus, setProductStatus] = useState(product.status);
+  const [loadingReorder, setLoadingReorder] = useState(false);
 
   // Fetch existing review for USER
   useEffect(() => {
@@ -92,6 +93,47 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
     }
   };
 
+  // Reorder (Buy it again)
+  // ---------------- Buy it again / Reorder ----------------
+  const handleReorder = async () => {
+    if (!confirm("Do you want to reorder this product?")) return;
+
+    try {
+      const payload = {
+        productId: product.productId,
+        quantity: product.quantity,
+        userId: userId,
+        title: product.title,
+        slug: product.slug || "",
+        shopName: product.seller,
+        price: product.price,
+        image: product.image,
+        currency: "BDT",
+        freeShipping: !!product.freeDelivery,
+      };
+
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errMsg = await res.text();
+        alert("Failed to add to cart: " + errMsg);
+        return;
+      }
+
+      // ✅ Redirect to payment page after adding to cart
+      router.push("/payment");
+    } catch (err) {
+      console.error("Reorder error:", err);
+      alert("Something went wrong. Try again.");
+    }
+  };
+
+
+
   return (
     <div className={`flex gap-4 ${!isFirst ? "pt-6 border-t border-gray-200" : ""}`}>
       <img
@@ -123,8 +165,9 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
 
         {/* Actions */}
         <div className="flex gap-2 mt-4 flex-wrap items-center">
-          {/* User actions */}
+          {/* USER actions */}
           {role === "USER" && <OrderInvoiceButton orderId={orderId} />}
+
           {(productStatus === "pending" || productStatus === "confirmed") && role === "USER" && (
             <button
               onClick={handleCancelProduct}
@@ -133,6 +176,7 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
               <XCircle className="w-3 h-3" /> Cancel
             </button>
           )}
+
           {role === "USER" &&
             productStatus === "delivered" &&
             !showReviewForm &&
@@ -145,45 +189,47 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
                 Write a Review
               </button>
             )}
+
           {role === "USER" && productStatus === "delivered" && (
             <button
-              onClick={() => router.push(`/cart?reorder=${orderId}`)}
-              className="px-4 py-1.5 border border-gray-300 rounded-md text-xs hover:bg-gray-50 flex-shrink-0"
+              onClick={handleReorder}
+              className="px-4 py-1.5 border border-gray-300 rounded-md text-xs hover:bg-gray-100 flex-shrink-0 bg-blue-50 text-blue-700 hover:bg-blue-100"
             >
               Buy it again
             </button>
           )}
 
-          {/* Shop Owner buttons */}
-          {/* Shop Owner buttons */}
-{role === "SHOP_OWNER" &&
-  statusOrder.map((status) => (
-    <button
-      key={status}
-      onClick={() => handleChangeStatus(status)}
-      className={`
-        px-3 py-1 text-xs font-semibold rounded-full border flex-shrink-0
-        ${
-          productStatus === status
-            ? "opacity-100 border-gray-600" // active status
-            : "opacity-80 hover:opacity-100"
-        }
-        ${
-          status === "pending" ? "bg-yellow-100 text-yellow-700 border-yellow-300" :
-          status === "confirmed" ? "bg-blue-100 text-blue-700 border-blue-300" :
-          status === "shipped" ? "bg-purple-100 text-purple-700 border-purple-300" :
-          status === "delivered" ? "bg-green-100 text-green-700 border-green-300" :
-          "bg-red-100 text-red-700 border-red-300"
-        }
-      `}
-    >
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </button>
-  ))}
 
+          {/* SHOP_OWNER buttons */}
+          {role === "SHOP_OWNER" &&
+            statusOrder.map((status) => (
+              <button
+                key={status}
+                onClick={() => handleChangeStatus(status)}
+                className={`
+                  px-3 py-1 text-xs font-semibold rounded-full border flex-shrink-0
+                  ${productStatus === status
+                    ? "opacity-100 border-gray-600"
+                    : "opacity-80 hover:opacity-100"
+                  }
+                  ${status === "pending"
+                    ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                    : status === "confirmed"
+                      ? "bg-blue-100 text-blue-700 border-blue-300"
+                      : status === "shipped"
+                        ? "bg-purple-100 text-purple-700 border-purple-300"
+                        : status === "delivered"
+                          ? "bg-green-100 text-green-700 border-green-300"
+                          : "bg-red-100 text-red-700 border-red-300"
+                  }
+                `}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </button>
+            ))}
         </div>
 
-        {/* Review form */}
+        {/* Review Form */}
         {showReviewForm && !existingReview && (
           <div className="mt-2 w-full max-w-md">
             <OrderReviewCard
@@ -198,7 +244,7 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
           </div>
         )}
 
-        {/* Thank you */}
+        {/* Thank You */}
         {existingReview && !showReviewForm && (
           <div className="mt-2 p-2 border rounded-md bg-green-50 text-green-800 text-xs max-w-md">
             Thank you for your review!
