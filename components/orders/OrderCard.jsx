@@ -8,7 +8,6 @@ const OrderCard = ({ order, role }) => {
   });
 
   const orderTotal = order.summary?.total?.toLocaleString("en-US") || "0";
-
   const shipTo = order.shippingAddress?.name || "N/A";
 
   return (
@@ -35,9 +34,7 @@ const OrderCard = ({ order, role }) => {
         </div>
 
         <div className="text-right">
-          <div className="uppercase tracking-tighter mb-1">
-            Order # {order.orderNumber}
-          </div>
+          <div className="uppercase tracking-tighter mb-1">Order # {order.orderNumber}</div>
           <a href="#" className="text-amazon-blue hover:underline">
             View order details
           </a>
@@ -52,7 +49,7 @@ const OrderCard = ({ order, role }) => {
             product={product}
             isFirst={idx === 0}
             role={role}
-            orderId={order._id || order.id || order.orderNumber} 
+            orderId={order._id || order.id}
           />
         ))}
       </div>

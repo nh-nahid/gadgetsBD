@@ -200,3 +200,47 @@ export async function getMostPurchasedProducts(limit = 10) {
 
   return aggregation.map(p => replaceMongoIdInObject(p));
 }
+
+
+/* ======================
+   Orders for Shop Owner
+====================== */
+export async function getOrdersForShopOwner(shopOwnerId) {
+  if (!shopOwnerId) return [];
+
+  // Fetch all orders that contain items from this shop owner
+  const orders = await orderModel
+    .find({ "items.shopOwnerId": shopOwnerId })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const filteredOrders = orders.map((order) => {
+    // Filter only the items for this shop owner
+    const shopItems = order.items
+      .filter((item) => item.shopOwnerId.toString() === shopOwnerId.toString())
+      .map((item) => ({
+        ...item,
+        id: item._id.toString(),
+        productId: item.productId.toString(),
+        shopOwnerId: item.shopOwnerId.toString(),
+      }));
+
+    const newOrder = {
+      ...order,
+      id: order._id.toString(),
+      items: shopItems,
+      userId: order.userId.toString(),
+    };
+
+    // ✅ FIX: If there is only 1 product for this shop owner, sync order status
+    if (shopItems.length === 1) {
+      newOrder.status = shopItems[0].status;
+    }
+
+    return newOrder;
+  });
+
+  return filteredOrders;
+}
+
+
