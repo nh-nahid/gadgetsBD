@@ -49,29 +49,30 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
   }, [product.productId, role, userId]);
 
   // Cancel order handler
-  const handleCancelOrder = async () => {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
+ const handleCancelOrder = async () => {
+  if (!confirm("Are you sure you want to cancel this order?")) return;
 
-    try {
-      const res = await fetch(`/api/orders/${orderId}/cancel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.productId }),
-      });
+  try {
+    const res = await fetch(`/api/orders/${orderId}/cancel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: product.productId }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (res.ok) {
-        alert("Order cancelled successfully!");
-        setProductStatus("cancelled"); // update UI
-      } else {
-        alert(data.message || "Failed to cancel order");
-      }
-    } catch (err) {
-      console.error("Cancel order error:", err);
-      alert("Something went wrong. Try again.");
+    if (res.ok) {
+      alert("Order cancelled successfully!");
+      setProductStatus("cancelled"); // update UI
+    } else {
+      alert(data.message || "Failed to cancel order");
     }
-  };
+  } catch (err) {
+    console.error("Cancel order error:", err);
+    alert("Something went wrong. Try again.");
+  }
+};
+
 
   return (
     <div className={`flex gap-4 ${!isFirst ? "pt-6 border-t border-gray-200" : ""}`}>

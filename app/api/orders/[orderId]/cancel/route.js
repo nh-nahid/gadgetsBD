@@ -1,46 +1,46 @@
-// app/api/orders/[orderId]/cancel/route.js
 import { NextResponse } from "next/server";
 import orderModel from "@/models/order-model";
 import { dbConnect } from "@/services/mongo";
 
-await dbConnect();
-
 export async function POST(req, { params }) {
   try {
+    await dbConnect();
+
     const { orderId } = params;
-    const body = await req.json();
-    const { productId } = body;
+    const { productId } = await req.json();
 
     if (!orderId || !productId) {
       return NextResponse.json({ message: "Missing orderId or productId" }, { status: 400 });
     }
 
-    // Find the order
-    const order = await orderModel.findById(orderId);
-    if (!order) {
-      return NextResponse.json({ message: "Order not found" }, { status: 404 });
-    }
-
-
-    let updated = false;
-    order.items = order.items.map((item) => {
-      if (item.productId.toString() === productId) {
-        if (item.status === "cancelled") return item; 
-        item.status = "cancelled";
-        updated = true;
+    // Cancel the item ONLY if it's pending or confirmed
+    const result = await orderModel.updateOne(
+      {
+        _id: orderId,
+        "items.productId": productId,
+        "items.status": { $in: ["pending", "confirmed"] },
+      },
+      {
+        $set: { "items.$.status": "cancelled" },
       }
-      return item;
-    });
+    );
 
-    if (!updated) {
-      return NextResponse.json({ message: "Product not found in order or already cancelled" }, { status: 400 });
+    if (result.modifiedCount === 0) {
+      return NextResponse.json({
+        message: "Cannot cancel shipped, delivered, or already cancelled items",
+      }, { status: 400 });
     }
 
-    await order.save();
+    // Optionally, update top-level order status if all items are cancelled
+    const order = await orderModel.findById(orderId).lean();
+    const allCancelled = order.items.every(i => i.status === "cancelled");
+    if (allCancelled) {
+      await orderModel.updateOne({ _id: orderId }, { $set: { status: "cancelled" } });
+    }
 
-    return NextResponse.json({ message: "Order cancelled successfully", order });
+    return NextResponse.json({ message: "Order item cancelled successfully" });
   } catch (err) {
-    console.error("Cancel order error:", err);
+    console.error("Cancel order API error:", err);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
