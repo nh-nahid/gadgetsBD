@@ -149,9 +149,11 @@ export async function getFullCartByUser(userId) {
 /* ======================
    Orders
 ====================== */
-export async function getOrderById(orderId) {
-  if (!orderId) return null;
-  const order = await orderModel.findById(orderId).lean();
+export async function getOrderByNumber(orderNumber) {
+  if (!orderNumber) return null;
+
+  const order = await orderModel.findOne({ orderNumber }).lean();
+
   return order ? replaceMongoIdInObject(order) : null;
 }
 

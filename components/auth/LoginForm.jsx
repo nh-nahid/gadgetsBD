@@ -6,12 +6,13 @@ import Logo from "./Logo";
 import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import SocialLogins from "./SocialLogins";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 const LoginForm = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const {session: data} = useSession();
 
  async function onSubmit(e) {
   e.preventDefault();

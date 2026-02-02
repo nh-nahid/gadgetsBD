@@ -4,9 +4,10 @@ import orderModel from "@/models/order-model";
 import { dbConnect } from "@/services/mongo";
 import mongoose from "mongoose";
 
+// Connect to DB
 await dbConnect();
 
-// GET reviews (paginated)
+// ---------------- GET REVIEWS ----------------
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -14,9 +15,12 @@ export async function GET(req) {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "5", 10);
 
-    if (!productId) return NextResponse.json({ message: "Missing productId" }, { status: 400 });
+    if (!productId)
+      return NextResponse.json({ message: "Missing productId" }, { status: 400 });
 
     const skip = (page - 1) * limit;
+
+    // Fetch all reviews for the product that are not hidden
     const reviews = await reviewModel
       .find({ productId, hidden: false })
       .sort({ createdAt: -1 })
@@ -39,11 +43,14 @@ export async function GET(req) {
     return NextResponse.json({ reviews: formatted });
   } catch (err) {
     console.error("GET /api/reviews error:", err);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
-// POST new review
+// ---------------- POST REVIEW ----------------
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -53,21 +60,36 @@ export async function POST(req) {
       return NextResponse.json({ message: "Missing fields" }, { status: 400 });
     }
 
-    // Only one review per user per product
+    // Check if user already reviewed this product
     const existing = await reviewModel.findOne({ productId, userId });
-    if (existing) return NextResponse.json({ message: "You already reviewed this product" }, { status: 400 });
+    if (existing)
+      return NextResponse.json(
+        { message: "You already reviewed this product" },
+        { status: 400 }
+      );
 
-    // Verify user purchased the product
+    // Verify that user purchased this product at least once
     const hasPurchased = await orderModel.exists({
       userId,
       "payment.status": "paid",
       "items.productId": new mongoose.Types.ObjectId(productId),
     });
 
-    if (!hasPurchased) return NextResponse.json({ message: "Only verified buyers can review" }, { status: 403 });
+    if (!hasPurchased)
+      return NextResponse.json(
+        { message: "Only verified buyers can review" },
+        { status: 403 }
+      );
 
-    const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 3).toUpperCase();
+    // Create initials for review
+    const initials = name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 3)
+      .toUpperCase();
 
+    // Create new review
     const newReview = await reviewModel.create({
       productId,
       userId,
@@ -97,6 +119,9 @@ export async function POST(req) {
     });
   } catch (err) {
     console.error("POST /api/reviews error:", err);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

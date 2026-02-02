@@ -3,7 +3,6 @@
 import { Download } from "lucide-react";
 
 const OrderInvoiceButton = ({ orderId }) => {
-  console.log(orderId);
   
 const handleDownload = () => {
   if (!orderId) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle, Truck, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Truck, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -18,7 +18,7 @@ const statusColors = {
 
 const statusOrder = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
-const OrderProduct = ({ product, isFirst, role, orderId }) => {
+const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
   const router = useRouter();
   const session = useSession();
   const userId = session?.data?.user?.id;
@@ -27,9 +27,8 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
   const [existingReview, setExistingReview] = useState(null);
   const [loadingReview, setLoadingReview] = useState(true);
   const [productStatus, setProductStatus] = useState(product.status);
-  const [loadingReorder, setLoadingReorder] = useState(false);
 
-  // Fetch existing review for USER
+  // ---------------- FETCH EXISTING REVIEW ----------------
   useEffect(() => {
     if (role === "USER" && userId) {
       const fetchReview = async () => {
@@ -37,7 +36,11 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
         try {
           const res = await fetch(`/api/reviews?productId=${product.productId}`);
           const data = await res.json();
-          const myReview = data.reviews?.find((r) => r.userId === userId);
+          // Only mark existing review if the order is delivered
+          const myReview =
+            productStatus === "delivered"
+              ? data.reviews?.find((r) => r.userId === userId)
+              : null;
           setExistingReview(myReview || null);
         } catch (err) {
           console.error("Failed to fetch review:", err);
@@ -47,63 +50,39 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
       };
       fetchReview();
     }
-  }, [product.productId, role, userId]);
+  }, [product.productId, role, userId, productStatus]);
 
-  // Cancel product (USER)
-  const handleCancelProduct = async () => {
-    if (!confirm("Are you sure you want to cancel this product?")) return;
+  // ---------------- CANCEL ORDER (USER) ----------------
+  const handleCancelOrder = async () => {
+    if (!confirm("Are you sure you want to cancel this order?")) return;
     try {
-      const res = await fetch(`/api/orders/${orderId}/update-status`, {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.productId, status: "cancelled" }),
+        body: JSON.stringify({ productId: product.productId }),
       });
       const data = await res.json();
       if (res.ok) {
         setProductStatus("cancelled");
-        alert("Product cancelled successfully!");
+        alert("Order cancelled successfully!");
       } else {
-        alert(data.message || "Failed to cancel product");
+        alert(data.message || "Failed to cancel order");
       }
     } catch (err) {
-      console.error("Cancel product error:", err);
+      console.error("Cancel order error:", err);
       alert("Something went wrong. Try again.");
     }
   };
 
-  // Shop Owner: status update via button
-  const handleChangeStatus = async (newStatus) => {
-    if (newStatus === productStatus) return; // don't re-update same status
-    try {
-      const res = await fetch(`/api/orders/${orderId}/update-status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.productId, status: newStatus }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setProductStatus(newStatus);
-        alert("Status updated successfully!");
-      } else {
-        alert(data.message || "Failed to update status");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Try again.");
-    }
-  };
-
-  // Reorder (Buy it again)
-  // ---------------- Buy it again / Reorder ----------------
+  // ---------------- REORDER ----------------
   const handleReorder = async () => {
     if (!confirm("Do you want to reorder this product?")) return;
-
     try {
       const payload = {
         productId: product.productId,
         quantity: product.quantity,
         userId: userId,
-        title: product.title,
+        title: product.name,
         slug: product.slug || "",
         shopName: product.seller,
         price: product.price,
@@ -124,7 +103,6 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
         return;
       }
 
-      // ✅ Redirect to payment page after adding to cart
       router.push("/payment");
     } catch (err) {
       console.error("Reorder error:", err);
@@ -132,22 +110,52 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
     }
   };
 
+  // ---------------- SHOP OWNER STATUS UPDATE ----------------
+  const handleChangeStatus = async (newStatus) => {
+    if (newStatus === productStatus) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}/update-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.productId, status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProductStatus(newStatus);
+        alert("Status updated successfully!");
+      } else {
+        alert(data.message || "Failed to update status");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Try again.");
+    }
+  };
 
+  // ---------------- REVIEW LOGIC ----------------
+  const canWriteReview =
+    role === "USER" && productStatus === "delivered" && !existingReview && !loadingReview;
 
+  const showThankYou =
+    role === "USER" && productStatus === "delivered" && existingReview && !loadingReview;
+
+  // ---------------- RENDER ----------------
   return (
     <div className={`flex gap-4 ${!isFirst ? "pt-6 border-t border-gray-200" : ""}`}>
+      {/* Product Image */}
       <img
         src={product.image}
-        alt={product.title}
+        alt={product.name}
         className="w-32 h-32 object-cover border border-gray-200 rounded"
       />
 
       <div className="flex-1">
+        {/* Product Info */}
         <a
           href={`/products/${product.productId}`}
           className="text-amazon-blue hover:underline font-bold text-sm"
         >
-          {product.title}
+          {product.name}
         </a>
         <p className="text-xs text-gray-600 mt-1">Sold by: {product.seller}</p>
         <p className="text-xs text-gray-600 mt-1">Quantity: {product.quantity}</p>
@@ -165,62 +173,56 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
 
         {/* Actions */}
         <div className="flex gap-2 mt-4 flex-wrap items-center">
-          {/* USER actions */}
-          {role === "USER" && <OrderInvoiceButton orderId={orderId} />}
+          {role === "USER" && <OrderInvoiceButton orderId={orderNumber} />}
 
           {(productStatus === "pending" || productStatus === "confirmed") && role === "USER" && (
             <button
-              onClick={handleCancelProduct}
+              onClick={handleCancelOrder}
               className="px-4 py-1.5 border border-red-300 bg-red-50 text-red-700 rounded-md text-xs hover:bg-red-100 flex items-center gap-1 flex-shrink-0"
             >
-              <XCircle className="w-3 h-3" /> Cancel
+              <XCircle className="w-3 h-3" /> Cancel Order
             </button>
           )}
 
-          {role === "USER" &&
-            productStatus === "delivered" &&
-            !showReviewForm &&
-            !existingReview &&
-            !loadingReview && (
-              <button
-                onClick={() => setShowReviewForm(true)}
-                className="px-4 py-1.5 border border-gray-300 rounded-md text-xs hover:bg-gray-50 flex-shrink-0"
-              >
-                Write a Review
-              </button>
-            )}
+          {canWriteReview && (
+            <button
+              onClick={() => setShowReviewForm(true)}
+              className="px-4 py-1.5 border border-gray-300 rounded-md text-xs hover:bg-gray-50 flex-shrink-0"
+            >
+              Write a Review
+            </button>
+          )}
 
-          {role === "USER" && productStatus === "delivered" && (
+          {role === "USER" && (
             <button
               onClick={handleReorder}
-              className="px-4 py-1.5 border border-gray-300 rounded-md text-xs hover:bg-gray-100 flex-shrink-0 bg-blue-50 text-blue-700 hover:bg-blue-100"
+              className="px-4 py-1.5 border border-gray-300 rounded-md text-xs hover:bg-gray-50 flex-shrink-0"
             >
               Buy it again
             </button>
           )}
 
-
-          {/* SHOP_OWNER buttons */}
           {role === "SHOP_OWNER" &&
             statusOrder.map((status) => (
               <button
                 key={status}
                 onClick={() => handleChangeStatus(status)}
-                className={`
-                  px-3 py-1 text-xs font-semibold rounded-full border flex-shrink-0
-                  ${productStatus === status
-                    ? "opacity-100 border-gray-600"
-                    : "opacity-80 hover:opacity-100"
+                className={`px-3 py-1 text-xs font-semibold rounded-full border flex-shrink-0
+                  ${
+                    productStatus === status
+                      ? "opacity-100 border-gray-600"
+                      : "opacity-80 hover:opacity-100"
                   }
-                  ${status === "pending"
-                    ? "bg-yellow-100 text-yellow-700 border-yellow-300"
-                    : status === "confirmed"
+                  ${
+                    status === "pending"
+                      ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                      : status === "confirmed"
                       ? "bg-blue-100 text-blue-700 border-blue-300"
                       : status === "shipped"
-                        ? "bg-purple-100 text-purple-700 border-purple-300"
-                        : status === "delivered"
-                          ? "bg-green-100 text-green-700 border-green-300"
-                          : "bg-red-100 text-red-700 border-red-300"
+                      ? "bg-purple-100 text-purple-700 border-purple-300"
+                      : status === "delivered"
+                      ? "bg-green-100 text-green-700 border-green-300"
+                      : "bg-red-100 text-red-700 border-red-300"
                   }
                 `}
               >
@@ -244,8 +246,8 @@ const OrderProduct = ({ product, isFirst, role, orderId }) => {
           </div>
         )}
 
-        {/* Thank You */}
-        {existingReview && !showReviewForm && (
+        {/* Thank You Message */}
+        {showThankYou && (
           <div className="mt-2 p-2 border rounded-md bg-green-50 text-green-800 text-xs max-w-md">
             Thank you for your review!
           </div>

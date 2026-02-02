@@ -1,3 +1,4 @@
+import Link from "next/link";
 import OrderProduct from "./OrderProduct";
 
 const OrderCard = ({ order, role }) => {
@@ -35,9 +36,9 @@ const OrderCard = ({ order, role }) => {
 
         <div className="text-right">
           <div className="uppercase tracking-tighter mb-1">Order # {order.orderNumber}</div>
-          <a href="#" className="text-amazon-blue hover:underline">
+          <Link href={`/orders/${ order.orderNumber}`} className="text-amazon-blue hover:underline">
             View order details
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -50,6 +51,7 @@ const OrderCard = ({ order, role }) => {
             isFirst={idx === 0}
             role={role}
             orderId={order._id || order.id}
+            orderNumber={order.orderNumber}
           />
         ))}
       </div>
