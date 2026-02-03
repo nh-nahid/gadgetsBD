@@ -1,59 +1,19 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const shopSchema = new mongoose.Schema(
+const shopSchema = new Schema(
   {
-    shopName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    isOfficial: {
-      type: Boolean,
-      default: false,
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    rating: {
-      type: Number,
-      default: 0, // average rating
-    },
-    reviewCount: {
-      type: Number,
-      default: 0, // total reviews across products
-    },
-    productsCount: {
-      type: Number,
-      default: 0, // total active products
-    },
-    joinedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    responseTime: {
-      type: String,
-      default: "Within 24 hours",
-    },
-    policies: [
-      {
-        type: String,
-      },
-    ],
-    freeDelivery: {
-      type: Boolean,
-      default: false,
-    },
-    shopSlug: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-    },
+    name: { type: String, required: true },
+    shopSlug: { type: String, required: true, unique: true },
+    ownerId: { type: Schema.Types.ObjectId, ref: "users", required: true },
+    description: { type: String, default: "" },
+    city: { type: String, required: true },
+    coverImage: { type: String, default: "" },
+    specialization: { type: String, default: "" },
+    rating: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now },
   },
-  { timestamps: true, collection: "shops" }
+  { timestamps: true }
 );
 
-// Export model
-export const shopModel = mongoose.models.Shop || mongoose.model("Shop", shopSchema);
+export const shopModel = mongoose.models.shops || mongoose.model("shops", shopSchema);

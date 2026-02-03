@@ -80,24 +80,33 @@ export async function getReviewCount(productId) {
 /* ======================
    Shops
 ====================== */
-export async function getAllShops(options = {}) {
-  const { limit, sortBy } = options;
+export async function getAllShops({ page = 1, limit = 6, sortBy } = {}) {
+  const skip = (page - 1) * limit;
 
   let query = shopModel.find().lean();
 
   if (sortBy) {
     switch (sortBy) {
-      case "rating": query = query.sort({ rating: -1 }); break;
-      case "newest": query = query.sort({ createdAt: -1 }); break;
-      default: break;
+      case "rating":
+        query = query.sort({ "rating.average": -1 });
+        break;
+      case "newest":
+        query = query.sort({ createdAt: -1 });
+        break;
+      default:
+        break;
     }
   }
 
-  if (limit) query = query.limit(limit);
+  const totalShops = await shopModel.countDocuments();
+  const shops = await query.skip(skip).limit(limit);
 
-  const shops = await query;
-  return replaceMongoIdInArray(shops);
+  return {
+    shops: shops.map((shop) => replaceMongoIdInObject(shop)),
+    totalPages: Math.ceil(totalShops / limit),
+  };
 }
+
 
 export async function getShopById(shopId) {
   if (!shopId) return null;
@@ -254,5 +263,8 @@ export async function getOrdersForShopOwner(shopOwnerId) {
 
   return filteredOrders;
 }
+
+
+
 
 

@@ -4,15 +4,14 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 
 export default function AuthModal() {
-  const pathname = usePathname(); // current URL
+  const pathname = usePathname(); 
   const router = useRouter();
 
-  // Determine which form to show
+
   let FormComponent = null;
   if (pathname.includes("/login")) FormComponent = LoginForm;
   else if (pathname.includes("/register")) FormComponent = RegisterForm;
 
-  // If not login/register, don’t render modal
   if (!FormComponent) return null;
 
   return (
@@ -27,7 +26,7 @@ export default function AuthModal() {
         "
       >
         <button
-          onClick={() => router.back()} // go back to previous page
+          onClick={() => router.push("/")} 
           className="absolute top-2 right-2 text-gray-500 hover:text-black"
         >
           ✕

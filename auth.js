@@ -5,12 +5,9 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import mongoClientPromise from "./database/mongoClientPromise";
 import { userModel } from "./models/user-model";
 import bcrypt from "bcryptjs";
-import { dbConnect } from "./services/mongo";
 import { replaceMongoIdInObject } from "@/utils/data-util";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "./lib/token";
 import { ObjectId } from "mongodb";
-
-await dbConnect();
 
 // Helper to link OAuth account in NextAuth accounts collection
 async function linkOAuthAccount(existingUser, account) {
@@ -38,7 +35,9 @@ async function linkOAuthAccount(existingUser, account) {
 }
 
 export const { handlers: { GET, POST }, auth } = NextAuth({
-  adapter: MongoDBAdapter(mongoClientPromise, { databaseName: process.env.ENVIRONMENT }),
+  adapter: MongoDBAdapter(mongoClientPromise, {
+    databaseName: process.env.ENVIRONMENT,
+  }),
   session: { strategy: "jwt" },
 
   providers: [
@@ -48,6 +47,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        // Only connect to DB here at runtime
         const user = await userModel.findOne({ email: credentials.email });
         if (!user || !user.password) throw new Error("Invalid credentials");
 
@@ -74,11 +74,8 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account.provider === "google") {
-        let existingUser = await userModel.findOne({ email: profile.email });
-
-        if (!existingUser) {
-          // Create new user if not exists
-          existingUser = await userModel.create({
+        const existingUser = await userModel.findOne({ email: profile.email }) || 
+          await userModel.create({
             name: profile.name,
             email: profile.email,
             image: profile.picture,
@@ -89,9 +86,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
             isOAuth: true,
             emailVerified: profile.email_verified ? new Date() : null,
           });
-        }
 
-        // Link OAuth account in accounts collection
         await linkOAuthAccount(existingUser, account);
 
         user = replaceMongoIdInObject(existingUser);

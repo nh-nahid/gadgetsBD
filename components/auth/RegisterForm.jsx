@@ -13,7 +13,7 @@ export default function RegisterForm() {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-  e.stopPropagation(); // <-- prevents any bubbling native form submit
+  e.stopPropagation(); 
 
   const form = e.target;
   const password = form.password.value;
