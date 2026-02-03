@@ -4,7 +4,8 @@ import { shopModel } from "@/models/shop-model";
 import { dbConnect } from "@/services/mongo";
 import { NextResponse } from "next/server";
 import { replaceMongoIdInObject } from "@/utils/data-util";
-import slugify from "slugify";
+import { slugify } from "@/utils/slugify";
+
 
 export const POST = async (req) => {
   try {

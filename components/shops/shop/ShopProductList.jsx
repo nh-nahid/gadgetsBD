@@ -5,21 +5,31 @@ export default function ShopProductList({ products }) {
   if (!products?.length) return <p>No products available.</p>;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {products.map((product) => (
-        <div key={product._id} className="bg-white rounded-sm shadow-sm overflow-hidden">
+        <div
+          key={product._id}
+          className="bg-white rounded-sm shadow-sm overflow-hidden"
+        >
           <Link href={`/product/${product.slug}`}>
-            <div className="relative h-48 w-full">
+            {/* Smaller square image */}
+            <div className="relative w-full h-32 sm:h-36 md:h-40 lg:h-44 overflow-hidden rounded-t-lg">
               <Image
-                src={product.images?.[0] || "/default-product.jpg"}
-                alt={product.title}
+                src={product?.images?.[0]?.url || "https://placehold.co/200x100"}
+                alt={product?.title || "Product"}
                 fill
                 className="object-cover"
               />
             </div>
-            <div className="p-4">
-              <h3 className="font-bold text-lg">{product.title}</h3>
-              <p className="text-sm text-gray-500 mb-2">${product.price}</p>
+
+            {/* Product Info */}
+            <div className="p-2 sm:p-3">
+              <h3 className="font-bold text-sm sm:text-base line-clamp-2">
+                {product.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                ${product.price}
+              </p>
             </div>
           </Link>
         </div>

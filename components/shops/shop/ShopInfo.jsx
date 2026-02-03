@@ -9,7 +9,7 @@ export default function ShopInfo({ shop }) {
       <div className="flex-shrink-0 w-40 h-40 relative rounded-sm overflow-hidden">
         <Image
           src={
-            shop.coverImage ||
+            shop?.coverImage ||
             "https://cloudinary-marketing-res.cloudinary.com/images/w_1000,c_scale/v1699909962/fallback_image_header/fallback_image_header-png?_i=AA"
           }
           alt={shop.name}
