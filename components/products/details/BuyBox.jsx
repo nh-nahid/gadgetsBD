@@ -1,5 +1,6 @@
 "use client";
 
+import { useCart } from "@/app/context/CartContext";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -11,7 +12,7 @@ export default function BuyBox({ product }) {
   const [inCart, setInCart] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
+  const { refreshCartCount } = useCart();
   // ---------------- SYNC CART STATE ----------------
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -79,6 +80,7 @@ export default function BuyBox({ product }) {
       });
 
       if (res.ok) {
+        refreshCartCount(session?.user?.id);
         setInCart(true);
         setOriginalQty(quantity);
       } else {
@@ -110,6 +112,7 @@ export default function BuyBox({ product }) {
       });
 
       if (res.ok) {
+        refreshCartCount(session?.user?.id);
         setInCart(false);
         setQuantity(1);
         setOriginalQty(1);

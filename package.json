@@ -12,6 +12,7 @@
     "@auth/mongodb-adapter": "^3.11.1",
     "bcryptjs": "^3.0.3",
     "bson": "^6.10.4",
+    "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
     "lodash": "^4.17.23",

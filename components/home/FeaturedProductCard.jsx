@@ -4,37 +4,42 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { useCart } from "@/app/context/CartContext";
 
 const FeaturedProductCard = ({ product }) => {
   const { data: session } = useSession();
   const [inCart, setInCart] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { refreshCartCount } = useCart();
 
-  // Sync cart state
+  const userId = session?.user?.id;
+
+  // Check if product is already in cart
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!userId) return;
 
     const checkCart = async () => {
       try {
-        const res = await fetch(`/api/cart?userId=${session.user.id}`);
+        const res = await fetch(`/api/cart/${userId}`);
         if (!res.ok) return;
 
-        const cart = await res.json();
+        const carts = await res.json();
+        const cart = carts?.[0];
         const existingItem = cart?.items?.find(
           (item) => item.productId.toString() === product.id
         );
-        if (existingItem) setInCart(true);
+        setInCart(!!existingItem);
       } catch (err) {
         console.error(err);
       }
     };
 
     checkCart();
-  }, [session?.user?.id, product.id]);
+  }, [userId, product.id]);
 
   // Add to cart
   const handleAddToCart = async () => {
-    if (!session?.user?.id) {
+    if (!userId) {
       alert("Please login to add items to your cart.");
       return;
     }
@@ -51,19 +56,27 @@ const FeaturedProductCard = ({ product }) => {
         body: JSON.stringify({
           productId: product.id,
           quantity: 1,
-          userId: session.user.id,
+          userId,
           title: product.title,
           slug: product.slug,
           price: product.price,
           currency: product.currency || "BDT",
-          image: product.images.find(img => img.isMain)?.url || "",
+          image:
+            product.images.find((img) => img.isMain)?.url ||
+            product.images?.[0]?.url ||
+            "",
           stock: product.stock,
           shopName: product?.shop?.shopName || "Unknown Shop",
           freeShipping: product.freeDelivery || false,
         }),
       });
-      if (res.ok) setInCart(true);
-      else alert("Failed to add product");
+
+      if (res.ok) {
+        setInCart(true);
+        refreshCartCount(userId); // ✅ pass correct userId
+      } else {
+        alert("Failed to add product");
+      }
     } catch (err) {
       console.error(err);
       alert("Something went wrong.");
@@ -74,7 +87,7 @@ const FeaturedProductCard = ({ product }) => {
 
   // Remove from cart
   const handleRemoveFromCart = async () => {
-    if (!session?.user?.id) return;
+    if (!userId) return;
 
     setLoading(true);
     try {
@@ -82,12 +95,17 @@ const FeaturedProductCard = ({ product }) => {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId,
           productId: product.id,
         }),
       });
-      if (res.ok) setInCart(false);
-      else alert("Failed to remove product");
+
+      if (res.ok) {
+        setInCart(false);
+        refreshCartCount(userId); // ✅ pass correct userId
+      } else {
+        alert("Failed to remove product");
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -100,7 +118,10 @@ const FeaturedProductCard = ({ product }) => {
       <Link href={`/products/${product.slug}`}>
         <div className="bg-gray-50 h-48 flex items-center justify-center mb-2 p-2">
           <Image
-            src={product.images?.find(img => img.isMain)?.url || product.images?.[0]?.url}
+            src={
+              product.images?.find((img) => img.isMain)?.url ||
+              product.images?.[0]?.url
+            }
             alt={product.title}
             width={150}
             height={150}
