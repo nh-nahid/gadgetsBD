@@ -2,64 +2,63 @@
 import React, { useEffect, useState } from "react";
 
 export default function EditOrderModal({
-  cartItems,
-  buyNowProduct,
-  shippingAddress,
+  cartItems = [],
+  buyNowProduct = null,
+  shippingAddress = {},
   userEmail,
   userId,
   onClose,
   onQtyChange,
   onAddressChange,
-  onRemoveItem, // 🔑 parent callback
+  onRemoveItem,
 }) {
   const [address, setAddress] = useState(shippingAddress);
   const [saving, setSaving] = useState(false);
 
-  // 🔑 Local modal state
+  // Local modal state
   const [localCartItems, setLocalCartItems] = useState(cartItems);
   const [localBuyNow, setLocalBuyNow] = useState(buyNowProduct);
-  const [removedItems, setRemovedItems] = useState([]); // track for DB deletion
+  const [removedItems, setRemovedItems] = useState([]);
 
-  // Sync modal local state if parent updates
+  // Sync local state with parent updates
   useEffect(() => setLocalCartItems(cartItems), [cartItems]);
   useEffect(() => setLocalBuyNow(buyNowProduct), [buyNowProduct]);
+  useEffect(() => setAddress(shippingAddress), [shippingAddress]);
 
   const handleFieldChange = (field, value) => {
     setAddress(prev => ({ ...prev, [field]: value }));
   };
 
-  // Remove from modal UI + track for save
   const handleRemoveItem = (productId) => {
-    // 1️⃣ Update local modal state
     setLocalCartItems(prev => prev.filter(item => item.productId !== productId));
     if (localBuyNow?.productId === productId) setLocalBuyNow(null);
 
-    // 2️⃣ Track for DB deletion
-    setRemovedItems(prev => [...prev, productId]);
+    setRemovedItems(prev => {
+      if (!prev.includes(productId)) return [...prev, productId];
+      return prev;
+    });
 
-    // 3️⃣ Immediately update parent so UI updates instantly
     onRemoveItem(productId);
   };
 
   const handleQtyChange = (productId, qty) => {
+    if (qty < 1) return;
+
     if (localBuyNow?.productId === productId) {
-      setLocalBuyNow({ ...localBuyNow, quantity: qty });
+      setLocalBuyNow(prev => ({ ...prev, quantity: qty }));
     } else {
       setLocalCartItems(prev =>
-        prev.map(item =>
-          item.productId === productId ? { ...item, quantity: qty } : item
-        )
+        prev.map(item => item.productId === productId ? { ...item, quantity: qty } : item)
       );
     }
 
-    // Notify parent
     onQtyChange(productId, qty);
   };
 
   const handleSaveChanges = async () => {
     setSaving(true);
     try {
-      // ---------------- 1️⃣ Save address ----------------
+      // 1️⃣ Save address
       if (address) {
         const res = await fetch(`/api/users/${userEmail}/address`, {
           method: "PUT",
@@ -71,50 +70,51 @@ export default function EditOrderModal({
         onAddressChange(saved);
       }
 
-      // ---------------- 2️⃣ Delete removed items ----------------
+      // 2️⃣ Delete removed items from DB
       for (const productId of removedItems) {
-        const res = await fetch("/api/cart", {
+        await fetch("/api/cart", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, productId }),
         });
-        if (!res.ok) throw new Error(await res.text());
       }
 
-      // ---------------- 3️⃣ Save Buy-Now product ----------------
+      // 3️⃣ Save Buy Now product
       if (localBuyNow) {
-        const res = await fetch("/api/cart", {
+        await fetch("/api/cart", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
             productId: localBuyNow.productId,
             quantity: localBuyNow.quantity,
-            title: localBuyNow.name,
+            title: localBuyNow.title,
             price: localBuyNow.price,
             image: localBuyNow.image || "",
             shopName: localBuyNow.seller || "Unknown",
+            currency: "BDT",
+            freeShipping: localBuyNow.freeShipping || false,
           }),
         });
-        if (!res.ok) throw new Error(await res.text());
       }
 
-      // ---------------- 4️⃣ Save remaining cart items ----------------
+      // 4️⃣ Save remaining cart items
       for (const item of localCartItems) {
-        const res = await fetch("/api/cart", {
+        await fetch("/api/cart", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
             productId: item.productId,
             quantity: item.quantity,
-            title: item.name,
+            title: item.title,
             price: item.price || 0,
             image: item.image || "",
             shopName: item.seller || "Unknown",
+            currency: "BDT",
+            freeShipping: item.freeShipping || false,
           }),
         });
-        if (!res.ok) throw new Error(await res.text());
       }
 
       alert("Order updated successfully!");
@@ -129,21 +129,19 @@ export default function EditOrderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-md w-11/12 max-w-lg p-6">
+      <div className="bg-white rounded-md w-11/12 max-w-lg p-6 max-h-[80vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Edit Order Details</h2>
 
         {/* PRODUCTS */}
-        <div className="space-y-3 max-h-60 overflow-y-auto">
+        <div className="space-y-3">
           {localBuyNow && (
             <div className="flex items-center gap-2">
-              <span className="flex-1">{localBuyNow.name}</span>
+              <span className="flex-1">{localBuyNow.title}</span>
               <input
                 type="number"
                 min={1}
                 value={localBuyNow.quantity}
-                onChange={(e) =>
-                  handleQtyChange(localBuyNow.productId, Number(e.target.value))
-                }
+                onChange={e => handleQtyChange(localBuyNow.productId, Number(e.target.value))}
                 className="w-16 border rounded px-2"
               />
               <button
@@ -157,12 +155,12 @@ export default function EditOrderModal({
 
           {localCartItems.map(item => (
             <div key={item.productId} className="flex items-center gap-2">
-              <span className="flex-1">{item.name}</span>
+              <span className="flex-1">{item.title}</span>
               <input
                 type="number"
                 min={1}
                 value={item.quantity}
-                onChange={(e) => handleQtyChange(item.productId, Number(e.target.value))}
+                onChange={e => handleQtyChange(item.productId, Number(e.target.value))}
                 className="w-16 border rounded px-2"
               />
               <button
@@ -178,42 +176,15 @@ export default function EditOrderModal({
         {/* ADDRESS */}
         {address && (
           <div className="mt-4 space-y-2">
-            <input
-              value={address.name}
-              onChange={(e) => handleFieldChange("name", e.target.value)}
-              className="w-full border px-2 py-1"
-              placeholder="Name"
-            />
-            <input
-              value={address.street}
-              onChange={(e) => handleFieldChange("street", e.target.value)}
-              className="w-full border px-2 py-1"
-              placeholder="Street"
-            />
-            <input
-              value={address.city}
-              onChange={(e) => handleFieldChange("city", e.target.value)}
-              className="w-full border px-2 py-1"
-              placeholder="City"
-            />
-            <input
-              value={address.postalCode}
-              onChange={(e) => handleFieldChange("postalCode", e.target.value)}
-              className="w-full border px-2 py-1"
-              placeholder="Postal Code"
-            />
-            <input
-              value={address.country}
-              onChange={(e) => handleFieldChange("country", e.target.value)}
-              className="w-full border px-2 py-1"
-              placeholder="Country"
-            />
-            <input
-              value={address.phone}
-              onChange={(e) => handleFieldChange("phone", e.target.value)}
-              className="w-full border px-2 py-1"
-              placeholder="Phone"
-            />
+            {["name", "street", "city", "postalCode", "country", "phone"].map(field => (
+              <input
+                key={field}
+                value={address[field] || ""}
+                onChange={e => handleFieldChange(field, e.target.value)}
+                className="w-full border px-2 py-1"
+                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+              />
+            ))}
           </div>
         )}
 

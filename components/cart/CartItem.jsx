@@ -1,46 +1,135 @@
-export default function CartItem({ item }) {
+"use client";
+import { useState } from "react";
+import { useCart } from "@/app/context/CartContext";
+
+export default function CartItem({ item, isSelected, toggleSelect, onQtyChange, onRemove, userId }) {
+  const maxQty = item.stock || 20;
+  const [updating, setUpdating] = useState(false);
+  const { refreshCartCount } = useCart();
+
+  // ---------------- HANDLE QUANTITY CHANGE ----------------
+  const handleQtyChange = async (e) => {
+    e.stopPropagation(); // prevent toggling selection
+    const qty = Number(e.target.value);
+    const prevQty = item.quantity;
+    setUpdating(true);
+
+    onQtyChange(item.productId, qty); // optimistic UI update
+
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          productId: String(item.productId),
+          quantity: qty,
+          title: item.title,
+          slug: item.slug,
+          shopName: item.shopName,
+          price: item.price,
+          image: item.image,
+          currency: item.currency,
+          freeShipping: item.freeShipping,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update quantity");
+      refreshCartCount(userId);
+    } catch (err) {
+      console.error(err);
+      onQtyChange(item.productId, prevQty); // revert UI
+      alert("Failed to update quantity. Please try again.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // ---------------- HANDLE REMOVE ----------------
+  const handleRemove = async (e) => {
+    e.stopPropagation(); // prevent toggling selection
+    onRemove(item.productId);
+
+    try {
+      const res = await fetch("/api/cart", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, productId: String(item.productId) }),
+      });
+
+      if (!res.ok) throw new Error("Failed to remove item");
+      refreshCartCount(userId);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove item. Please try again.");
+    }
+  };
+
   return (
-    <div className="p-4 border-b border-gray-300 flex gap-4 hover:bg-gray-50">
+    <div
+      className={`p-4 border-b border-gray-300 flex gap-4 cursor-pointer hover:bg-gray-50 ${isSelected ? "bg-gray-100" : ""}`}
+      onClick={() => toggleSelect(item.productId)} // toggle selection when clicking outside qty/remove
+    >
+      {/* IMAGE */}
       <div className="w-32 h-32 flex-shrink-0">
         <img
-          src={item.image}
+          src={item.image || "/placeholder.png"}
           alt={item.title}
           className="w-full h-full object-cover rounded border"
         />
       </div>
 
+      {/* DETAILS */}
       <div className="flex-1">
-        <h3 className="font-medium text-base mb-1">
-          {item.title}
-        </h3>
-
+        <h3 className="font-medium text-base mb-1">{item.title}</h3>
         <p className="text-sm text-green-700 font-medium">
           {item.stock > 0 ? "In Stock" : "Out of Stock"}
         </p>
-
-        <p className="text-xs text-gray-600 mt-1">
-          Sold by: {item.shopName}
-        </p>
-
+        <p className="text-xs text-gray-600 mt-1">Sold by: {item.shopName}</p>
         {item.freeShipping && (
-          <p className="text-xs text-gray-600">
-            Eligible for FREE Shipping
-          </p>
+          <p className="text-xs text-gray-600">Eligible for FREE Shipping</p>
         )}
 
+        {/* ACTIONS */}
         <div className="flex items-center gap-4 mt-3">
-          <span className="text-sm">Qty: {item.quantity}</span>
-          <span className="text-gray-300">|</span>
-          <button className="text-sm text-amazon-blue hover:underline">
+          {/* CHECKBOX */}
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => e.stopPropagation()} // ✅ prevent toggling twice
+            className="cursor-pointer"
+          />
+
+          {/* QUANTITY */}
+          <span className="text-sm">
+            Qty:{" "}
+            <select
+              value={item.quantity}
+              onChange={handleQtyChange}
+              disabled={updating}
+              className="border border-gray-300 rounded px-2 py-0.5"
+              onClick={(e) => e.stopPropagation()} // ✅ prevent parent click
+            >
+              {Array.from({ length: maxQty }, (_, i) => i + 1).map((q) => (
+                <option key={q} value={q}>{q}</option>
+              ))}
+            </select>
+          </span>
+
+          {/* DELETE */}
+          <button
+            onClick={handleRemove}
+            className="text-xs text-red-600 hover:underline"
+            onMouseDown={(e) => e.stopPropagation()} // ✅ prevent toggle before click
+          >
             Delete
           </button>
         </div>
       </div>
 
+      {/* PRICE */}
       <div className="text-right">
-        <p className="text-lg font-bold text-amazon-orange">
-          ৳{item.price.toLocaleString()}
-        </p>
+        <p className="text-lg font-bold text-amazon-orange">৳{item.price.toLocaleString()}</p>
       </div>
     </div>
   );

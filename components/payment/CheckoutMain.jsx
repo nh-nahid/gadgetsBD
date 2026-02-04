@@ -3,26 +3,35 @@ import React, { useState } from "react";
 import CheckoutSteps from "./CheckoutSteps";
 import OrderSummary from "./OrderSummary";
 
-export default function CheckoutMain({ cartItems, buyNowProduct, userAddress, onQtyChange, userEmail, userId, onAddressChange }) {
-
+export default function CheckoutMain({
+  cartItems = [],
+  buyNowProduct = null,
+  userAddress,
+  onQtyChange,
+  userEmail,
+  userId,
+  onAddressChange,
+}) {
+  // ---------------- PAYMENT DETAILS ----------------
   const [cardName, setCardName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cvv, setCvv] = useState("");
   const [expMonth, setExpMonth] = useState("");
   const [expYear, setExpYear] = useState("");
 
-
+  // ---------------- PRODUCTS TO SHOW ----------------
   const productsToShow = buyNowProduct
-    ? [buyNowProduct, ...cartItems.filter(item => item.id !== buyNowProduct.id)]
+    ? [buyNowProduct, ...cartItems.filter(item => item.productId !== buyNowProduct.productId)]
     : cartItems;
 
-  if (!productsToShow.length) return <p className="text-center py-10">Your cart is empty.</p>;
+  if (!productsToShow.length)
+    return <p className="text-center py-10">Your cart is empty.</p>;
 
   return (
     <main className="checkout-container flex-1 py-10 px-4 flex flex-col lg:flex-row gap-8">
       {/* LEFT: Checkout Steps */}
       <div className="flex-1 space-y-6">
-        <CheckoutSteps 
+        <CheckoutSteps
           cartItems={productsToShow}
           buyNowProduct={buyNowProduct}
           userAddress={userAddress}
@@ -45,18 +54,20 @@ export default function CheckoutMain({ cartItems, buyNowProduct, userAddress, on
       </div>
 
       {/* RIGHT: Order Summary */}
-      <OrderSummary 
-        cartItems={productsToShow} 
-        buyNowProduct={buyNowProduct} 
-        userId={userId} 
-        userEmail={userEmail} 
-        shippingAddress={userAddress}
-        cardName={cardName}
-        cardNumber={cardNumber}
-        cvv={cvv}
-        expMonth={expMonth}
-        expYear={expYear}
+      <div className="lg:w-[300px]">
+        <OrderSummary
+          cartItems={cartItems}
+          buyNowProduct={buyNowProduct}
+          userId={userId}
+          userEmail={userEmail}
+          shippingAddress={userAddress}
+          cardName={cardName}
+          cardNumber={cardNumber}
+          cvv={cvv}
+          expMonth={expMonth}
+          expYear={expYear}
         />
+      </div>
     </main>
   );
 }

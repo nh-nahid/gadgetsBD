@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { slugify } from "@/utils/slugify";
-import { debounce } from "lodash"; 
+import { debounce } from "lodash";
 
 const categories = ["All", "Laptops", "Phones", "Accessories", "Gaming"];
 
@@ -13,18 +13,14 @@ const SearchFilter = () => {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  // Debounced search function
   const performSearch = debounce(() => {
     const params = new URLSearchParams();
-
     if (query) params.set("q", query);
     if (selectedCategory && selectedCategory !== "all")
       params.set("category", slugify(selectedCategory));
-
     router.push(`/products?${params.toString()}`);
   }, 1000);
 
-  // Run debounced search on input/category change
   useEffect(() => {
     if (query || selectedCategory) {
       performSearch();
@@ -49,6 +45,8 @@ const SearchFilter = () => {
       {/* Search Input */}
       <input
         type="text"
+        name="search-query"          // unique name to prevent autofill
+        autoComplete="off"           // turn off browser autofill
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search Gadgets, Laptops, Phones..."
@@ -57,7 +55,7 @@ const SearchFilter = () => {
 
       {/* Search Button */}
       <button
-        onClick={() => performSearch.flush()} // trigger immediate search
+        onClick={() => performSearch.flush()}
         className="bg-amazon-secondary hover:bg-[#fa8900] px-4 flex items-center justify-center"
       >
         <Search className="text-black w-5 h-5" />

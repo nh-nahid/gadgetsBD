@@ -7,7 +7,7 @@ export default async function SuccessPage({ params }) {
 
   // Fetch the order from MongoDB
   const order = await getOrderById(orderId);
-console.log(order);
+
 
   if (!order) {
     return (

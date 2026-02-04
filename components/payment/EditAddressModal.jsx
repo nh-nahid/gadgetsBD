@@ -1,8 +1,23 @@
 "use client";
 import React, { useState } from "react";
 
-export default function EditAddressModal({ shippingAddress, userEmail, onClose, onAddressChange }) {
-  const [address, setAddress] = useState(shippingAddress);
+export default function EditAddressModal({
+  shippingAddress,
+  userEmail,
+  onClose,
+  onAddressChange,
+}) {
+  // Default to empty fields if shippingAddress is null
+  const initialAddress = shippingAddress || {
+    name: "",
+    street: "",
+    city: "",
+    postalCode: "",
+    country: "",
+    phone: "",
+  };
+
+  const [address, setAddress] = useState(initialAddress);
   const [saving, setSaving] = useState(false);
 
   const handleFieldChange = (field, value) =>
@@ -21,7 +36,9 @@ export default function EditAddressModal({ shippingAddress, userEmail, onClose, 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(address),
       });
+
       if (!res.ok) throw new Error(await res.text());
+
       const savedAddress = await res.json();
       onAddressChange(savedAddress);
       onClose();
@@ -33,29 +50,64 @@ export default function EditAddressModal({ shippingAddress, userEmail, onClose, 
     }
   };
 
+  const autocompleteMap = {
+    name: "name",
+    street: "street-address",
+    city: "address-level2",
+    postalCode: "postal-code",
+    country: "country",
+    phone: "tel",
+  };
+
+  const inputTypeMap = {
+    phone: "tel",
+    postalCode: "text",
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" role="dialog" aria-modal="true">
-      <div className="bg-white rounded-md w-11/12 max-w-md p-6 relative">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Wrap inputs in a form with autoComplete="off" */}
+      <form autoComplete="off" className="bg-white rounded-md w-11/12 max-w-md p-6 relative">
         <h2 className="text-xl font-bold mb-4">Edit Shipping Address</h2>
         <div className="space-y-2">
-          {["name","street","city","postalCode","country","phone"].map(field => (
-            <input
-              key={field}
-              type="text"
-              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-              value={address[field]}
-              onChange={e => handleFieldChange(field, e.target.value)}
-              className="w-full border border-gray-300 rounded px-2 py-1"
-            />
-          ))}
+          {["name", "street", "city", "postalCode", "country", "phone"].map(
+            field => (
+              <input
+                key={field}
+                type={inputTypeMap[field] || "text"}
+                name={field}
+                autoComplete={autocompleteMap[field]}
+                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                value={address[field]}
+                onChange={e => handleFieldChange(field, e.target.value)}
+                className="w-full border border-gray-300 rounded px-2 py-1"
+              />
+            )
+          )}
         </div>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded" disabled={saving}>Cancel</button>
-          <button onClick={handleSave} className="px-4 py-2 bg-amazon-yellow hover:bg-amazon-yellow_hover rounded" disabled={saving}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-300 rounded"
+            disabled={saving}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="px-4 py-2 bg-amazon-yellow hover:bg-amazon-yellow_hover rounded"
+            disabled={saving}
+          >
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

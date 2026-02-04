@@ -1,11 +1,10 @@
 "use client";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 import CartHeader from "@/components/cart/CartHeader";
 import CartItemList from "@/components/cart/CartItemList";
-import OrderSummary from "@/components/payment/OrderSummary";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import CartOrderSummary from "@/components/cart/CartOrderSummary";
 
 export default function CartPage() {
   const { data: session, status } = useSession();
@@ -13,89 +12,81 @@ export default function CartPage() {
 
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItems, setSelectedItems] = useState({});
 
   useEffect(() => {
     if (status !== "authenticated") return;
 
-    async function fetchCart() {
+    const fetchCart = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`/api/cart/${userId}`);
-        const carts = await res.json();
+        const res = await fetch(`/api/cart?userId=${userId}`);
+        const cart = await res.json();
+        const items = cart?.items || [];
+        setCartItems(items);
 
-        // You have ONE cart per user
-        const items = carts[0]?.items || [];
-
-        // ✅ Map 1:1 with Mongo model
-        setCartItems(
-          items.map((item) => ({
-            id: item._id || item.id,
-            productId: item.productId,
-            title: item.title,
-            slug: item.slug,
-            image: item.image,
-            price: item.price,        // number
-            quantity: item.quantity,
-            stock: item.stock,
-            shopName: item.shopName,
-            freeShipping: item.freeShipping,
-          }))
-        );
+        // Default: all selected
+        const allSelected = {};
+        items.forEach(i => (allSelected[i.productId] = true));
+        setSelectedItems(allSelected);
       } catch (err) {
-        console.error("Failed to fetch cart:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchCart();
   }, [status, userId]);
 
-if (!loading && cartItems.length === 0) {
-  return (
-    <main className="max-w-[1500px] mx-auto w-full p-4">
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="w-24 h-24 mb-6 text-gray-300">
-          🛒
-        </div>
+  const toggleSelect = (productId) => {
+    setSelectedItems(prev => ({ ...prev, [productId]: !prev[productId] }));
+  };
 
-        <h2 className="text-2xl font-semibold text-gray-800">
-          Your cart is empty
-        </h2>
+  const handleQtyChange = (productId, qty) => {
+    setCartItems(prev =>
+      prev.map(item => item.productId === productId ? { ...item, quantity: qty } : item)
+    );
+  };
 
-        <p className="mt-2 text-gray-500 max-w-md">
-          Looks like you haven’t added anything yet.  
-          Start shopping to see items here.
-        </p>
+  const handleRemove = (productId) => {
+    setCartItems(prev => prev.filter(item => item.productId !== productId));
+    setSelectedItems(prev => {
+      const copy = { ...prev };
+      delete copy[productId];
+      return copy;
+    });
+  };
 
-        <Link
-          href="/products"
-          className="mt-6 inline-flex items-center justify-center rounded-md bg-black px-6 py-3 text-white hover:bg-gray-800 transition"
-        >
-          Continue Shopping
-        </Link>
-      </div>
-    </main>
-  );
-}
+  // Only selected items
+  const selectedItemsArray = cartItems.filter(item => selectedItems[item.productId]);
+  const subtotal = selectedItemsArray.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-
-  const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  if (!loading && cartItems.length === 0)
+    return <p className="text-center py-10">Your cart is empty.</p>;
 
   return (
     <main className="max-w-[1500px] mx-auto w-full p-4">
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="flex-1">
           <CartHeader />
-          <CartItemList items={cartItems} />
+          <CartItemList
+            items={cartItems}
+            selectedItems={selectedItems}
+            toggleSelect={toggleSelect}
+            onQtyChange={handleQtyChange}
+            onRemove={handleRemove}
+            userId={userId}
+          />
         </div>
 
         <div className="lg:w-80">
-          <OrderSummary
+          <CartOrderSummary
+            userId={userId}
+            cartItems={cartItems}
+            selectedItems={selectedItems}
             subtotal={subtotal}
-            itemCount={cartItems.length}
+            itemCount={selectedItemsArray.length}
           />
         </div>
       </div>

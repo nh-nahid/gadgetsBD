@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useRef, useState } from "react";
 import CheckoutMain from "@/components/payment/CheckoutMain";
 import EditOrderModal from "@/components/payment/EditOrderModal";
@@ -10,8 +9,10 @@ const PaymentClient = () => {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
 
+
   const buyNowProductId = searchParams.get("productId");
   const buyNowQty = Number(searchParams.get("qty") || 1);
+  const fromCart = searchParams.get("fromCart") === "true";
 
   const [cartItems, setCartItems] = useState([]);
   const [buyNowProduct, setBuyNowProduct] = useState(null);
@@ -24,95 +25,110 @@ const PaymentClient = () => {
 
   if (status === "unauthenticated") redirect("/login");
 
-  // ---------------- QUANTITY UPDATE ----------------
   const handleQtyChange = (productId, qty) => {
     if (buyNowProduct?.productId === productId) {
       setBuyNowProduct(prev => ({ ...prev, quantity: qty }));
     } else {
-      setCartItems(prev =>
-        prev.map(item =>
-          String(item.productId) === String(productId)
-            ? { ...item, quantity: qty }
-            : item
-        )
-      );
+      setCartItems(prev => prev.map(item => String(item.productId) === String(productId) ? { ...item, quantity: qty } : item));
     }
   };
 
-  // ---------------- REMOVE ITEM ----------------
   const handleRemoveItem = (productId) => {
-    // Update UI instantly
-    setCartItems(prev => prev.filter(item => item.productId !== productId));
-    setBuyNowProduct(prev => (prev?.productId === productId ? null : prev));
+    setCartItems(prev => prev.filter(item => String(item.productId) !== String(productId)));
+    setBuyNowProduct(prev => prev?.productId === productId ? null : prev);
   };
 
-  // ---------------- FETCH DATA ----------------
   useEffect(() => {
-    if (status !== "authenticated" || !session?.user?.email) return;
-    if (hasFetched.current) return;
+    if (status !== "authenticated" || !userId || hasFetched.current) return;
     hasFetched.current = true;
 
     const fetchData = async () => {
       setLoading(true);
       try {
         // 1️⃣ Fetch cart
-        const resCart = await fetch(`/api/cart/${session.user.id}`);
+        const resCart = await fetch(`/api/cart/${userId}`);
         let items = [];
         if (resCart.ok) {
           const cartData = await resCart.json();
-          items = cartData.flatMap(cart => cart.items || []).map(item => ({
-            ...item,
-            productId: item.productId || item.id,
+          items = cartData[0]?.items?.map(item => ({
+            productId: String(item.productId || item.id),
+            id: String(item.id || item._id),
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity,
             image: item.image || "",
-            name: item.title,
-            seller: item.shopName,
-          }));
+            seller: item.shopName || "Unknown Seller",
+            stock: item.stock,
+            freeShipping: item.freeShipping,
+            slug: item.slug,
+          })) || [];
         }
 
-        const filteredCart = buyNowProductId
-          ? items.filter(item => item.productId !== buyNowProductId)
-          : items;
-        setCartItems(filteredCart);
-
-        // 2️⃣ Fetch Buy-Now product
-        if (buyNowProductId) {
+        // 2️⃣ Buy Now product
+        if (buyNowProductId && !fromCart) {
           const resProduct = await fetch(`/api/products/${buyNowProductId}`);
           if (resProduct.ok) {
             const productData = await resProduct.json();
             setBuyNowProduct({
-              id: productData.id,
-              productId: productData.id,
-              name: productData.title,
+              productId: String(productData.id),
+              id: String(productData.id),
+              title: productData.title,
               price: productData.price,
-              image:
-                productData.images?.find(img => img.isMain)?.url ||
-                productData.images?.[0]?.url ||
-                "",
+              image: productData.images?.[0]?.url || "",
               seller: productData.shop?.shopName || "Unknown Seller",
               quantity: buyNowQty,
+              stock: productData.stock,
+              slug: productData.slug,
+              freeShipping: productData.freeDelivery || false,
             });
+            items = items.filter(i => String(i.productId) !== String(buyNowProductId));
           }
         }
 
-        // 3️⃣ Fetch user address
+        // 3️⃣ From cart -> only selected
+        if (fromCart) {
+          const productIds = searchParams.getAll("productId");
+          const qtys = searchParams.getAll("qty").map(Number);
+          const normalizedIds = productIds.map(id => String(id));
+
+          const selected = items.filter(item => normalizedIds.includes(String(item.productId)));
+          selected.forEach(item => {
+            const idx = normalizedIds.indexOf(String(item.productId));
+            item.quantity = qtys[idx] || 1;
+          });
+          setCartItems(selected);
+        } else {
+          setCartItems(items);
+        }
+
+        // 4️⃣ Shipping address
         const resUser = await fetch(`/api/users/${session.user.email}`);
         if (resUser.ok) {
-          const userData = await resUser.json();
-          setShippingAddress(userData.addresses?.[0] || null);
+          const data = await resUser.json();
+          setShippingAddress(data.addresses?.[0] || null);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Payment fetch error:", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [status, session?.user?.email, buyNowProductId, buyNowQty]);
+  }, [status, userId]);
 
-  if (loading) return <p className="text-center py-10">Loading checkout...</p>;
-  if (!cartItems.length && !buyNowProduct)
-    return <p className="text-center py-10">Your cart is empty.</p>;
+  if (loading) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-amazon-yellow" />
+      <p className="text-sm text-gray-600">
+        Loading your checkout…
+      </p>
+    </div>
+  );
+}
+
+  if (!cartItems.length && !buyNowProduct) return <p className="text-center py-10">Your cart is empty.</p>;
 
   return (
     <>
@@ -124,6 +140,7 @@ const PaymentClient = () => {
         userEmail={session.user.email}
         userId={userId}
         onAddressChange={setShippingAddress}
+        onRemoveItem={handleRemoveItem}
       />
 
       {isEditModalOpen && (
@@ -136,7 +153,7 @@ const PaymentClient = () => {
           onQtyChange={handleQtyChange}
           onAddressChange={setShippingAddress}
           userId={userId}
-          onRemoveItem={handleRemoveItem} // sync with modal
+          onRemoveItem={handleRemoveItem}
         />
       )}
 
