@@ -13,10 +13,11 @@ const FeaturedProductCard = ({ product }) => {
   const { refreshCartCount } = useCart();
 
   const userId = session?.user?.id;
+  const role = session?.user?.role || "USER"; 
 
-  // Check if product is already in cart
+  
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || role === "SHOP_OWNER") return;
 
     const checkCart = async () => {
       try {
@@ -35,9 +36,9 @@ const FeaturedProductCard = ({ product }) => {
     };
 
     checkCart();
-  }, [userId, product.id]);
+  }, [userId, product.id, role]);
 
-  // Add to cart
+
   const handleAddToCart = async () => {
     if (!userId) {
       alert("Please login to add items to your cart.");
@@ -73,7 +74,7 @@ const FeaturedProductCard = ({ product }) => {
 
       if (res.ok) {
         setInCart(true);
-        refreshCartCount(userId); // ✅ pass correct userId
+        refreshCartCount(userId); 
       } else {
         alert("Failed to add product");
       }
@@ -85,7 +86,6 @@ const FeaturedProductCard = ({ product }) => {
     }
   };
 
-  // Remove from cart
   const handleRemoveFromCart = async () => {
     if (!userId) return;
 
@@ -102,7 +102,7 @@ const FeaturedProductCard = ({ product }) => {
 
       if (res.ok) {
         setInCart(false);
-        refreshCartCount(userId); // ✅ pass correct userId
+        refreshCartCount(userId); 
       } else {
         alert("Failed to remove product");
       }
@@ -149,7 +149,15 @@ const FeaturedProductCard = ({ product }) => {
         </div>
       )}
 
-      {!inCart ? (
+      {/* Button logic */}
+      {role === "SHOP_OWNER" ? (
+        <Link
+          href={`/products/${product.slug}`}
+          className="w-full block bg-amazon-yellow py-1.5 rounded-md text-sm mt-2  text-center hover:bg-yellow-400"
+        >
+          View Product
+        </Link>
+      ) : !inCart ? (
         <button
           onClick={handleAddToCart}
           disabled={loading || product.stock === 0}

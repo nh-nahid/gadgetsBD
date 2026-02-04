@@ -16,15 +16,19 @@ export async function GET(req) {
       return NextResponse.json({ canReview: false });
     }
 
-    // 1️⃣ Already reviewed?
+    // 1️⃣ Check if user already submitted a review
     const existingReview = await reviewModel.exists({ productId, userId });
     if (existingReview) return NextResponse.json({ canReview: false });
 
-    // 2️⃣ Has purchased?
+    // 2️⃣ Check if user has purchased the product (paid only)
     const hasPurchased = await orderModel.exists({
       userId,
       "payment.status": "paid",
-      "items.productId": new mongoose.Types.ObjectId(productId),
+      "items": {
+        $elemMatch: {
+          productId: new mongoose.Types.ObjectId(productId),
+        },
+      },
     });
 
     return NextResponse.json({ canReview: !!hasPurchased });

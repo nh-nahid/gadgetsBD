@@ -12,57 +12,61 @@ export default function RegisterForm() {
   const isOwner = role === "SHOP_OWNER";
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  e.stopPropagation(); 
+    e.preventDefault();
+    e.stopPropagation();
 
-  const form = e.target;
-  const password = form.password.value;
-  const passwordConfirm = form.passwordConfirm.value;
+    const form = e.target;
+    const password = form.password.value;
+    const passwordConfirm = form.passwordConfirm.value;
 
-  if (password !== passwordConfirm) {
-    alert("Passwords do not match");
-    return;
-  }
-
-  if (password.length < 6) {
-    alert("Password must be at least 6 characters");
-    return;
-  }
-
-  const data = {
-    name: form.name.value,
-    email: form.email.value,
-    password,
-    role,
-    shopName: isOwner ? form.shopName.value : null,
-    mobile: form.mobile.value,
-  };
-
-  setLoading(true);
-
-  try {
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    const result = await res.json();
-    setLoading(false);
-
-    if (!res.ok) {
-      alert(result.error || "Something went wrong");
+    if (password !== passwordConfirm) {
+      alert("Passwords do not match");
+      return;
+    }
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters");
       return;
     }
 
-    // SPA-friendly navigation
-    router.replace(role === "SHOP_OWNER" ? "/profile" : "/login");
-  } catch (err) {
-    setLoading(false);
-    alert(err.message || "Server error");
-  }
-};
+    const data = {
+      name: form.name.value,
+      email: form.email.value,
+      password,
+      role,
+      shopName: isOwner ? form.shopName.value : null,
+      mobile: form.mobile.value,
+    };
 
+    setLoading(true);
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+      setLoading(false);
+
+      if (!res.ok) {
+        alert(result.error || "Something went wrong");
+        return;
+      }
+
+      // ✅ Save access token and shop to localStorage
+      localStorage.setItem("accessToken", result.accessToken);
+      localStorage.setItem("refreshToken", result.refreshToken);
+      if (result.shop) {
+        localStorage.setItem("shop", JSON.stringify(result.shop));
+      }
+
+      // ✅ Redirect immediately to profile
+      router.replace("/profile");
+    } catch (err) {
+      setLoading(false);
+      alert(err.message || "Server error");
+    }
+  };
 
   return (
     <div className="bg-white text-amazon-text flex flex-col min-h-screen items-center pt-8">
@@ -201,26 +205,25 @@ export default function RegisterForm() {
         </form>
 
         {/* Google Sign Up */}
-        { role === "USER" && (
+        {role === "USER" && (
           <div className="mt-4 flex justify-center gap-2 items-center text-sm">
-          <span>or continue with</span>
-          <button
-            type="button"
-            className="flex items-center gap-2 p-2 border rounded"
-            onClick={() => window.location.href = "/api/auth/signin/google"}
-          >
-            <Image
-              src="/google-icon.png"
-              alt="Google"
-              width={16}
-              height={16}
-              className="w-4 h-4"
-            />
-            Google
-          </button>
-        </div>
-        ) }
-        
+            <span>or continue with</span>
+            <button
+              type="button"
+              className="flex items-center gap-2 p-2 border rounded"
+              onClick={() => (window.location.href = "/api/auth/signin/google")}
+            >
+              <Image
+                src="/google-icon.png"
+                alt="Google"
+                width={16}
+                height={16}
+                className="w-4 h-4"
+              />
+              Google
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

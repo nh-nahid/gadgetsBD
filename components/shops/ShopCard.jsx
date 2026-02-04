@@ -4,7 +4,6 @@ import Link from "next/link";
 
 export default function ShopCard({ shop }) {
   if (!shop) return null; 
-console.log("shop:", shop);
 
   const {
     name = "Unnamed Shop",

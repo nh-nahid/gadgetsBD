@@ -1,0 +1,40 @@
+"use client";
+
+import { useState } from "react";
+import ShopView from "./ShopView";
+import ShopEdit from "./ShopEdit";
+
+export default function ShopProfilePage({ shop, setShop }) {
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  return (
+    <main className="max-w-[1200px] mx-auto w-full p-6">
+      {/* Header */}
+      <div className="mb-8 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-normal">{shop.name}</h1>
+          <p className="text-sm text-gray-600">
+            Manage your shop information and appearance on Gadgets BD
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsEditMode(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors"
+          >
+            View Mode
+          </button>
+          <button
+            onClick={() => setIsEditMode(true)}
+            className="px-4 py-2 bg-amazon-yellow hover:bg-amazon-yellow_hover border border-amazon-secondary rounded-md text-sm font-bold transition-colors"
+          >
+            Edit Mode
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      {isEditMode ? <ShopEdit shop={shop} setIsEditMode={setIsEditMode} setShop={setShop} /> : <ShopView shop={shop} />}
+    </main>
+  );
+}

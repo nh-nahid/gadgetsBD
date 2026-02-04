@@ -10,7 +10,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
   const userId = session?.user?.id;
   const userName = session?.user?.name;
 
-  const [reviews, setReviews] = useState(initialReviews);
+  const [reviews, setReviews] = useState(initialReviews || []);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [canReview, setCanReview] = useState(false);
@@ -18,21 +18,32 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
   const [editReview, setEditReview] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
 
-  // Check if user can review (only one review per product)
+  // ✅ Check if user can review via backend (purchased & not reviewed)
   useEffect(() => {
-    if (!userId || !productId) return;
-    const userReview = reviews.find((r) => r.userId === userId);
-    setCanReview(!userReview);
-  }, [userId, productId, reviews]);
+    const checkCanReview = async () => {
+      if (!userId || !productId) return;
+      try {
+        const res = await fetch(
+          `/api/reviews/can-review?productId=${productId}&userId=${userId}`
+        );
+        const data = await res.json();
+        setCanReview(data.canReview);
+      } catch (err) {
+        console.error("Failed to check canReview:", err);
+        setCanReview(false);
+      }
+    };
+    checkCanReview();
+  }, [userId, productId]);
 
-  // Fetch reviews from server whenever tab changes or productId changes
+  // Fetch reviews whenever tab changes or productId changes
   useEffect(() => {
     const fetchReviews = async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/reviews?productId=${productId}&page=1`);
         const data = await res.json();
-        setReviews(data.reviews);
+        setReviews(data.reviews || []);
         setPage(1);
       } catch (err) {
         console.error("Failed to fetch reviews:", err);
@@ -48,7 +59,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
     try {
       const res = await fetch(`/api/reviews?productId=${productId}&page=${page + 1}`);
       const data = await res.json();
-      setReviews((prev) => [...prev, ...data.reviews]);
+      setReviews((prev) => [...prev, ...(data.reviews || [])]);
       setPage((p) => p + 1);
     } catch (err) {
       console.error("Failed to load more reviews:", err);
@@ -94,10 +105,10 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
     setShowForm(false);
   };
 
-  if (!reviews.length) return <p>No reviews yet.</p>;
-
   const averageRating =
-    reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
 
   // Filter reviews for current tab and show user's review on top
   const filteredReviews = reviews
@@ -167,6 +178,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
 
       {/* Reviews List */}
       <div className="space-y-6">
+        {filteredReviews.length === 0 && <p>No reviews yet.</p>}
         {filteredReviews.map((review) => (
           <div key={review.id} className="border-b pb-6">
             <div className="flex items-center gap-2 mb-1 justify-between">
@@ -182,7 +194,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
                 )}
               </div>
 
-              {/* Styled Edit/Delete buttons on left */}
+              {/* Edit/Delete buttons */}
               {review.userId === userId && (
                 <div className="flex gap-2">
                   <button
@@ -211,13 +223,15 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
         ))}
       </div>
 
-      <button
-        onClick={loadMoreReviews}
-        disabled={loading}
-        className="mt-6 px-6 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50"
-      >
-        {loading ? "Loading..." : "Load More Reviews"}
-      </button>
+      {filteredReviews.length > 0 && (
+        <button
+          onClick={loadMoreReviews}
+          disabled={loading}
+          className="mt-6 px-6 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50"
+        >
+          {loading ? "Loading..." : "Load More Reviews"}
+        </button>
+      )}
 
       {/* Average Rating */}
       <div className="mt-4">

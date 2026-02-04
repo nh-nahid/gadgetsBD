@@ -119,12 +119,12 @@ const PaymentClient = () => {
 
   if (loading) {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-amazon-yellow" />
-      <p className="text-sm text-gray-600">
-        Loading your checkout…
-      </p>
-    </div>
+    <div className="flex flex-col items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amazon-blue mb-4"></div>
+        <p className="text-gray-700 text-lg font-medium">
+          Loading your checkout...
+        </p>
+      </div>
   );
 }
 

@@ -11,7 +11,7 @@ export default function ShopProductList({ products }) {
           key={product._id}
           className="bg-white rounded-sm shadow-sm overflow-hidden"
         >
-          <Link href={`/product/${product.slug}`}>
+          <Link href={`/products/${product.slug}`}>
             {/* Smaller square image */}
             <div className="relative w-full h-32 sm:h-36 md:h-40 lg:h-44 overflow-hidden rounded-t-lg">
               <Image

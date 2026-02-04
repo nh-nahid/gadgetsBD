@@ -6,49 +6,75 @@ import { NextResponse } from "next/server";
 import { replaceMongoIdInObject } from "@/utils/data-util";
 import { slugify } from "@/utils/slugify";
 
-
 export const POST = async (req) => {
   try {
-    const { name, email, password, role, shopName, mobile, city } = await req.json();
+    const {
+      name,
+      email,
+      password,
+      role,
+      shopName,
+      mobile,
+      city,
+      country,
+      description,
+      specializesIn,
+      address,
+      yearEstablished,
+      employees,
+      brands,
+      website,
+      coverImage,
+    } = await req.json();
+
     await dbConnect();
 
     // 1️⃣ Check if email exists
     const existingUser = await userModel.findOne({ email });
-    if (existingUser) {
+    if (existingUser)
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
-    }
 
     // 2️⃣ Create new user
     const newUser = await userModel.create({
       name,
       email,
-      password, // hashed automatically by pre-save hook
+      password, // hashed automatically
       role: role || "USER",
       shopName: role === "SHOP_OWNER" ? shopName : null,
       mobile,
     });
 
-    // 3️⃣ If user is a shop owner, create a shop
+    // 3️⃣ If SHOP_OWNER, create shop
     let shop = null;
     if (role === "SHOP_OWNER") {
       const baseSlug = slugify(shopName || name, { lower: true });
       let shopSlug = baseSlug;
       let i = 1;
 
-      // Ensure slug is unique
       while (await shopModel.findOne({ shopSlug })) {
         shopSlug = `${baseSlug}-${i++}`;
       }
 
       shop = await shopModel.create({
+        shopOwnerId: newUser._id, // matches JSON
         name: shopName || name,
         shopSlug,
-        ownerId: newUser._id,
-        city: city || "Unknown",
-        coverImage: "/default-shop.jpg",
-        specialization: "General",
-        rating: 0,
-        totalRatings: 0,
+        ownerName: name,
+        email,
+        phone: mobile || "",
+        description: description || "No description provided",
+        coverImage: coverImage || "/placeholder.png",
+        location: {
+          city: city || "Unknown",
+          country: country || "Bangladesh",
+        },
+        address: address || "",
+        rating: { average: 0, count: 0 },
+        specializesIn: specializesIn || ["General"],
+        yearEstablished: yearEstablished || new Date().getFullYear(),
+        employees: employees || 0,
+        brands: brands || [],
+        website: website || "",
       });
     }
 
@@ -62,28 +88,27 @@ export const POST = async (req) => {
       userId: newUser._id.toString(),
     });
 
-    // 5️⃣ Save refresh token in MongoDB
+    // 5️⃣ Save refresh token
     newUser.refreshToken = refreshToken;
     await newUser.save();
 
-    // 6️⃣ Clean user object for frontend
+    // 6️⃣ Clean user object
     const cleanUser = replaceMongoIdInObject(newUser.toObject());
 
     // 7️⃣ Return response
     return NextResponse.json(
       {
-        message: "User created successfully",
+        message: "User and shop created successfully",
         user: cleanUser,
         shop: shop ? replaceMongoIdInObject(shop.toObject()) : null,
         accessToken,
         refreshToken,
-        expiresIn: 30 * 60, // 30 minutes
+        expiresIn: 30 * 60,
       },
       { status: 201 }
     );
-
   } catch (error) {
-    console.error("Error creating user:", error);
+    console.error("Error creating user/shop:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 };

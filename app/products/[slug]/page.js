@@ -98,6 +98,7 @@ const ProductDetailsPage = async ({ params }) => {
         link: null,
       };
 
+
   return (
     <main className="flex-1 max-w-[1500px] mx-auto w-full p-4">
       {/* Breadcrumbs */}
@@ -123,7 +124,7 @@ const ProductDetailsPage = async ({ params }) => {
           features={product.features}
           reviews={reviews}
           shop={shop}
-          productId={product.id} // ReviewsTab uses this for POST/edit/delete
+          productId={product.id} 
         />
       </div>
 

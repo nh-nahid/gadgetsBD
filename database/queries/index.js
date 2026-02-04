@@ -110,7 +110,23 @@ export async function getAllShops({ page = 1, limit = 6, sortBy } = {}) {
 
 export async function getShopById(shopId) {
   if (!shopId) return null;
+  if (!mongoose.Types.ObjectId.isValid(shopId)) return null;
+
   const shop = await shopModel.findById(shopId).lean();
+  return shop ? replaceMongoIdInObject(shop) : null;
+}
+
+
+export async function getShopByOwnerId(shopOwnerId) {
+  if (!shopOwnerId) return null;
+
+  // Make sure shopOwnerId is a valid ObjectId
+  const validId = mongoose.Types.ObjectId.isValid(shopOwnerId);
+  if (!validId) return null;
+
+  // Query the shop by shopOwnerId
+  const shop = await shopModel.findOne({ shopOwnerId }).lean();
+
   return shop ? replaceMongoIdInObject(shop) : null;
 }
 

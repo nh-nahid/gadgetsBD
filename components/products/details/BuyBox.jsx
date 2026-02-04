@@ -4,22 +4,27 @@ import { useCart } from "@/app/context/CartContext";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function BuyBox({ product }) {
   const { data: session } = useSession();
   const [quantity, setQuantity] = useState(1);
-  const [originalQty, setOriginalQty] = useState(1); // Track original quantity
+  const [originalQty, setOriginalQty] = useState(1);
   const [inCart, setInCart] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { refreshCartCount } = useCart();
+
+  const userId = session?.user?.id;
+  const role = session?.user?.role || "USER";
+
   // ---------------- SYNC CART STATE ----------------
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!userId || role === "SHOP_OWNER") return; // ✅ Skip shop owners
 
     const checkCart = async () => {
       try {
-        const res = await fetch(`/api/cart?userId=${session.user.id}`);
+        const res = await fetch(`/api/cart?userId=${userId}`);
         if (!res.ok) return;
 
         const cart = await res.json();
@@ -38,28 +43,24 @@ export default function BuyBox({ product }) {
     };
 
     checkCart();
-  }, [session?.user?.id, product.id]);
+  }, [userId, product.id, role]);
 
-  // ---------------- HANDLE QUANTITY CHANGE ----------------
   const handleQuantityChange = (e) => {
     const selectedQty = Math.min(Number(e.target.value), product.stock);
     setQuantity(selectedQty);
   };
 
-  // ---------------- ADD / UPDATE CART ----------------
   const handleCartAction = async () => {
-    if (!session?.user?.id) {
+    if (!userId) {
       alert("Please login to add items to your cart.");
       return;
     }
-
     if (product.stock === 0) {
       alert("Sorry, this product is out of stock.");
       return;
     }
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/cart", {
         method: "POST",
@@ -67,7 +68,7 @@ export default function BuyBox({ product }) {
         body: JSON.stringify({
           productId: product.id,
           quantity,
-          userId: session.user.id,
+          userId,
           title: product.title,
           slug: product.slug,
           price: product.price,
@@ -80,7 +81,7 @@ export default function BuyBox({ product }) {
       });
 
       if (res.ok) {
-        refreshCartCount(session?.user?.id);
+        refreshCartCount(userId);
         setInCart(true);
         setOriginalQty(quantity);
       } else {
@@ -95,24 +96,22 @@ export default function BuyBox({ product }) {
     }
   };
 
-  // ---------------- REMOVE FROM CART ----------------
   const handleRemoveFromCart = async () => {
-    if (!session?.user?.id) return;
+    if (!userId) return;
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/cart", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId,
           productId: product.id,
         }),
       });
 
       if (res.ok) {
-        refreshCartCount(session?.user?.id);
+        refreshCartCount(userId);
         setInCart(false);
         setQuantity(1);
         setOriginalQty(1);
@@ -126,13 +125,11 @@ export default function BuyBox({ product }) {
     }
   };
 
-  // ---------------- BUY NOW ----------------
   const buyNow = () => {
-    if (!session?.user?.id) {
+    if (!userId) {
       alert("Please login to purchase items.");
       return;
     }
-
     if (product.stock === 0) {
       alert("Product out of stock");
       return;
@@ -143,7 +140,6 @@ export default function BuyBox({ product }) {
     );
   };
 
-  // ---------------- DETERMINE CART BUTTON ----------------
   const cartButtonLabel = !inCart
     ? "Add to Cart"
     : quantity !== originalQty
@@ -178,7 +174,7 @@ export default function BuyBox({ product }) {
           className="border border-gray-300 rounded px-3 py-1 text-sm w-20"
           value={quantity}
           onChange={handleQuantityChange}
-          disabled={product.stock === 0}
+          disabled={product.stock === 0 || role === "SHOP_OWNER"} 
         >
           {Array.from({ length: Math.min(product.stock, 10) }, (_, i) => i + 1).map(
             (n) => (
@@ -188,30 +184,42 @@ export default function BuyBox({ product }) {
         </select>
       </div>
 
-      {/* 🔥 ADD / UPDATE CART BUTTON */}
-      <button
-        onClick={handleCartAction}
-        disabled={cartButtonDisabled}
-        className={`w-full py-2 rounded-md shadow-sm mb-2 text-sm font-medium border ${cartButtonColor}`}
-      >
-        {loading ? "Processing..." : cartButtonLabel}
-      </button>
-
-      {/* 🔥 REMOVE BUTTON */}
-      {inCart && quantity === originalQty && (
-        <button
-          onClick={handleRemoveFromCart}
-          disabled={loading}
-          className="w-full py-2 rounded-md shadow-sm mb-2 text-sm font-medium border bg-red-500 hover:bg-red-600 text-white border-red-500"
+      {/* ---------------- CART / MANAGE BUTTON ---------------- */}
+      {role === "SHOP_OWNER" ? (
+        <Link
+          href={`/products/${product.slug}`}
+          className="w-full block bg-amazon-secondary py-2 rounded-md text-sm mt-2 mb-2 text-white text-center hover:bg-amazon-secondary_hover"
         >
-          Remove from Cart
-        </button>
+          Manage Product
+        </Link>
+      ) : (
+        <>
+          <button
+            onClick={handleCartAction}
+            disabled={cartButtonDisabled}
+            className={`w-full py-2 rounded-md shadow-sm mb-2 text-sm font-medium border ${cartButtonColor}`}
+          >
+            {loading ? "Processing..." : cartButtonLabel}
+          </button>
+
+          {inCart && quantity === originalQty && (
+            <button
+              onClick={handleRemoveFromCart}
+              disabled={loading}
+              className="w-full py-2 rounded-md shadow-sm mb-2 text-sm font-medium border bg-red-500 hover:bg-red-600 text-white border-red-500"
+            >
+              Remove from Cart
+            </button>
+          )}
+        </>
       )}
 
       <button
         onClick={buyNow}
-        disabled={product.stock === 0}
-        className="w-full bg-amazon-secondary hover:bg-amazon-secondary_hover py-2 rounded-md shadow-sm text-sm font-medium text-white"
+        disabled={product.stock === 0 || role === "SHOP_OWNER"} // disable buy for shop owner
+        className={`w-full bg-amazon-secondary hover:bg-amazon-secondary_hover py-2 rounded-md shadow-sm text-sm font-medium text-white ${
+          role === "SHOP_OWNER" ? "opacity-50 cursor-not-allowed" : ""
+        }`}
       >
         Buy Now
       </button>

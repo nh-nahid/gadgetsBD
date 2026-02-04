@@ -33,7 +33,7 @@ export default function ShopInfoTab({ shop }) {
         <div>
           <h3 className="font-bold mb-2">Policies</h3>
           <div className="space-y-2 text-sm">
-            {shop.policies?.map((policy, idx) => (
+            {shop?.policies?.map((policy, idx) => (
               <p key={idx} className="flex items-center">
                 <CheckCircle className="w-4 h-4 inline text-green-600 mr-1" />
                 {policy}
