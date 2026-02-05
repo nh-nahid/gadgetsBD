@@ -3,9 +3,10 @@ import { dbConnect } from "@/services/mongo";
 
 
 
+
 export async function GET(req) {
   try {
-    await dbConnect(); // ensure DB connected
+    await dbConnect(); 
     const products = await getAllProducts();
 
     return new Response(JSON.stringify({ success: true, products }), {
