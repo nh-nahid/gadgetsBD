@@ -7,12 +7,31 @@ import ShopEdit from "./ShopEdit";
 export default function ShopProfilePage({ shop, setShop }) {
   const [isEditMode, setIsEditMode] = useState(false);
 
+  const defaultShop = {
+    name: "",
+    shopSlug: "",
+    ownerName: "",
+    email: "",
+    phone: "",
+    description: "No description provided",
+    coverImage: "/placeholder.png",
+    location: { city: "Unknown", country: "Bangladesh" },
+    address: "",
+    rating: { average: 0, count: 0 },
+    specializesIn: ["General"],
+    yearEstablished: new Date().getFullYear(),
+    employees: 0,
+    brands: [],
+    website: "",
+    ...shop, 
+  };
+
   return (
     <main className="max-w-[1200px] mx-auto w-full p-6">
       {/* Header */}
       <div className="mb-8 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-normal">{shop.name}</h1>
+          <h1 className="text-3xl font-normal">Shop Profile</h1>
           <p className="text-sm text-gray-600">
             Manage your shop information and appearance on Gadgets BD
           </p>
@@ -34,7 +53,11 @@ export default function ShopProfilePage({ shop, setShop }) {
       </div>
 
       {/* Content */}
-      {isEditMode ? <ShopEdit shop={shop} setIsEditMode={setIsEditMode} setShop={setShop} /> : <ShopView shop={shop} />}
+      {isEditMode ? (
+        <ShopEdit shop={defaultShop} setIsEditMode={setIsEditMode} setShop={setShop} />
+      ) : (
+        <ShopView shop={defaultShop} />
+      )}
     </main>
   );
 }

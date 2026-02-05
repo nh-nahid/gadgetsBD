@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Logo from "./Logo";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { signIn } from "next-auth/react";
 
 export default function RegisterForm() {
   const [role, setRole] = useState("USER");
@@ -53,14 +54,26 @@ export default function RegisterForm() {
         return;
       }
 
-      // ✅ Save access token and shop to localStorage
-      localStorage.setItem("accessToken", result.accessToken);
-      localStorage.setItem("refreshToken", result.refreshToken);
-      if (result.shop) {
-        localStorage.setItem("shop", JSON.stringify(result.shop));
+      // ================= SHOP_OWNER auto-login =================
+      if (isOwner) {
+        const login = await signIn("credentials", {
+          redirect: false,
+          email: data.email,
+          password: data.password,
+        });
+
+        if (login?.error) {
+          alert("Auto-login failed");
+          return;
+        }
+
+        router.replace("/profile");
+        return;
       }
 
-      // ✅ Redirect immediately to profile
+      // ================= USER -> normal token storage =================
+      localStorage.setItem("accessToken", result.accessToken);
+      localStorage.setItem("refreshToken", result.refreshToken);
       router.replace("/profile");
     } catch (err) {
       setLoading(false);
@@ -74,6 +87,7 @@ export default function RegisterForm() {
       <div className="w-full max-w-[400px] p-6 a-box mb-6">
         <h1 className="text-2xl font-normal mb-4">Create account</h1>
 
+        {/* Role selection */}
         <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-sm">
           <button
             type="button"
@@ -95,8 +109,8 @@ export default function RegisterForm() {
           </button>
         </div>
 
+        {/* Form */}
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-bold mb-1">
               Your name
@@ -111,7 +125,6 @@ export default function RegisterForm() {
             />
           </div>
 
-          {/* Shop Name only for owners */}
           {isOwner && (
             <div>
               <label htmlFor="shopName" className="block text-sm font-bold mb-1">
@@ -121,14 +134,13 @@ export default function RegisterForm() {
                 id="shopName"
                 name="shopName"
                 type="text"
-                required={isOwner}
+                required
                 placeholder="Your shop name"
                 className="w-full px-2 py-1.5 border border-gray-400 rounded-sm"
               />
             </div>
           )}
 
-          {/* Mobile */}
           <div>
             <label htmlFor="mobile" className="block text-sm font-bold mb-1">
               Mobile number
@@ -148,7 +160,6 @@ export default function RegisterForm() {
             </div>
           </div>
 
-          {/* Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-bold mb-1">
               Email
@@ -162,7 +173,6 @@ export default function RegisterForm() {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-bold mb-1">
               Password
@@ -204,7 +214,7 @@ export default function RegisterForm() {
           </button>
         </form>
 
-        {/* Google Sign Up */}
+        {/* Google Sign Up for normal users */}
         {role === "USER" && (
           <div className="mt-4 flex justify-center gap-2 items-center text-sm">
             <span>or continue with</span>
@@ -213,13 +223,7 @@ export default function RegisterForm() {
               className="flex items-center gap-2 p-2 border rounded"
               onClick={() => (window.location.href = "/api/auth/signin/google")}
             >
-              <Image
-                src="/google-icon.png"
-                alt="Google"
-                width={16}
-                height={16}
-                className="w-4 h-4"
-              />
+              <Image src="/google-icon.png" alt="Google" width={16} height={16} className="w-4 h-4" />
               Google
             </button>
           </div>
