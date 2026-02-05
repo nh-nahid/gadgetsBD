@@ -11,7 +11,7 @@ const SocialLogins = ({ mode }) => {
   const handleGoogleLogin = () => {
     setLoading(true);
     signIn("google", {
-      callbackUrl: "/", // redirect to homepage after login
+      callbackUrl: "/", 
     });
   };
 
