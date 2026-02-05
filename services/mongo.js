@@ -1,4 +1,3 @@
-// lib/dbConnect.js
 import mongoose from "mongoose";
 
 let cached = global.mongoose;
@@ -8,18 +7,17 @@ if (!cached) {
 }
 
 export async function dbConnect() {
+  if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
+    return;
+  }
+
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: false, 
-    };
-
-    cached.promise = mongoose
-      .connect(process.env.MONGODB_CONNECTION_STRING, opts)
-      .then((mongoose) => mongoose);
-      
-      console.log("MongoDB connected");
+    cached.promise = mongoose.connect(
+      process.env.MONGODB_CONNECTION_STRING,
+      { bufferCommands: false }
+    );
   }
 
   cached.conn = await cached.promise;
