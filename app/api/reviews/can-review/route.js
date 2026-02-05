@@ -4,23 +4,24 @@ import { reviewModel } from "@/models/review-model";
 import { dbConnect } from "@/services/mongo";
 import mongoose from "mongoose";
 
-await dbConnect();
+export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
+await dbConnect();
+
   try {
     const { searchParams } = new URL(req.url);
     const productId = searchParams.get("productId");
-    const userId = searchParams.get("userId"); // pass userId from client
+    const userId = searchParams.get("userId"); 
 
     if (!productId || !userId) {
       return NextResponse.json({ canReview: false });
     }
 
-    // 1️⃣ Check if user already submitted a review
+
     const existingReview = await reviewModel.exists({ productId, userId });
     if (existingReview) return NextResponse.json({ canReview: false });
 
-    // 2️⃣ Check if user has purchased the product (paid only)
     const hasPurchased = await orderModel.exists({
       userId,
       "payment.status": "paid",

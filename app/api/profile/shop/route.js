@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getShopByOwnerId } from "@/database/queries";
 import { dbConnect } from "@/services/mongo";
 
+export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
   try {
