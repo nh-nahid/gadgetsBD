@@ -17,21 +17,36 @@ await dbConnect();
 export async function getAllProducts(options = {}) {
   const { limit, sortBy } = options;
 
+  // Only fetch published products
   let query = productModel.find({ isActive: true }).lean();
 
+  // Sorting logic
   if (sortBy) {
     switch (sortBy) {
-      case "price-asc": query = query.sort({ price: 1 }); break;
-      case "price-desc": query = query.sort({ price: -1 }); break;
-      case "rating": query = query.sort({ averageRating: -1 }); break;
-      case "newest": query = query.sort({ createdAt: -1 }); break;
-      case "featured": default: break;
+      case "price-asc":
+        query = query.sort({ price: 1 });
+        break;
+      case "price-desc":
+        query = query.sort({ price: -1 });
+        break;
+      case "rating":
+        query = query.sort({ averageRating: -1 });
+        break;
+      case "newest":
+        query = query.sort({ createdAt: -1 });
+        break;
+      case "featured":
+      default:
+        break;
     }
   }
 
+  // Limit number of products
   if (limit) query = query.limit(limit);
 
   const products = await query;
+
+  // Convert _id to id for consistency
   return replaceMongoIdInArray(products);
 }
 
@@ -282,79 +297,49 @@ export async function getOrdersForShopOwner(shopOwnerId) {
 
 
 
-/* ======================
-   Create Product
-====================== */
-export async function createProduct({
-  title,
-  description,
-  price,
-  stock = 0,
-  category,
-  brand,
-  features = [],
-  images = [],
-  warranty,
-  shopOwnerId,
-}) {
-  if (!shopOwnerId) {
-    throw new Error("shopOwnerId is required");
+
+export async function getProductsByShop(shopOwnerId, options = {}) {
+  if (!shopOwnerId) throw new Error("shopOwnerId is required");
+
+  // Convert string to ObjectId
+  let ownerId;
+  try {
+    ownerId = new mongoose.Types.ObjectId(shopOwnerId);
+  } catch (err) {
+    throw new Error("Invalid shopOwnerId");
   }
 
-  await dbConnect();
+  const { limit, skip = 0, sortBy } = options;
 
+  let query = productModel.find({
+    "shop.shopOwnerId": ownerId,
+    isActive: true,
+  }).lean();
 
-  const shop = await shopModel.findOne({ shopOwnerId }).lean();
-  if (!shop) {
-    throw new Error("Shop not found for this owner");
+  // Sorting
+  if (sortBy) {
+    switch (sortBy) {
+      case "price-asc": query = query.sort({ price: 1 }); break;
+      case "price-desc": query = query.sort({ price: -1 }); break;
+      case "rating": query = query.sort({ averageRating: -1 }); break;
+      case "newest": query = query.sort({ createdAt: -1 }); break;
+      default: break;
+    }
   }
 
+  if (skip) query = query.skip(skip);
+  if (limit) query = query.limit(limit);
 
-  if (!title || !description || !price || !category || !brand) {
-    throw new Error("Missing required product fields");
-  }
+  const products = await query;
 
-  // 🔗 Slug generation (safe)
-  const slugBase = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-
-  let slug = slugBase;
-  let count = 1;
-
-  while (await productModel.exists({ slug })) {
-    slug = `${slugBase}-${count++}`;
-  }
-
-
-  const product = await productModel.create({
-    title: title.trim(),
-    slug,
-    description: description.trim(),
-    features,
-
-    price: Number(price),
-    stock: Number(stock) || 0,
-
-    category,
-    brand,
-
-    images,
-
-    shopOwnerId,
-    shop: {
-      shopOwnerId,
-      shopName: shop.shopName,
-      isOfficial: shop.isOfficial ?? false,
-    },
-
-    warranty: warranty || "No warranty",
-    isPublished: false, 
-    isActive: true,     
-  });
-
-  return replaceMongoIdInObject(product);
+  // Convert _id and shopOwnerId to strings for frontend
+  return products.map((p) => ({
+    ...p,
+    id: p._id.toString(),
+    shopOwnerId: p.shop.shopOwnerId.toString(),
+  }));
 }
+
+
 
 

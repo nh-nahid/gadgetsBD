@@ -1,21 +1,15 @@
 "use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Header from "@/components/add-product/Header";
+import { useState, useEffect } from "react";
+import ActionButtons from "@/components/add-product/ActionButtons";
 import ProductIdentity from "@/components/add-product/ProductIdentity";
 import PricingInventory from "@/components/add-product/PricingInventory";
 import ProductImages from "@/components/add-product/ProductImages";
 import Specifications from "@/components/add-product/Specifications";
-import ActionButtons from "@/components/add-product/ActionButtons";
-import { uploadToImageKit } from "@/lib/uploadToImageKit";
 import { useSession } from "next-auth/react";
 
-export default function AddProductPage() {
-  const router = useRouter();
-  const { data: session } = useSession(); // logged-in session
-  const shopId = session?.shop?.id;
-
+export default function ProductForm({ product = null, onClose, onSaved, fetchProducts }) {
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
   const [form, setForm] = useState({
     title: "",
@@ -27,21 +21,34 @@ export default function AddProductPage() {
     sku: "",
     availability: "In Stock",
     warranty: "No Warranty",
-    specs: {
-      processor: "",
-      ram: "",
-      storage: "",
-      display: "",
-      others: "",
-    },
+    specs: { processor: "", ram: "", storage: "", display: "", others: "" },
     images: [],
-    features: [], 
+    features: [],
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // =================== Input Handlers ===================
+  // Prefill form if editing
+  useEffect(() => {
+    if (product) {
+      setForm({
+        title: product.title || "",
+        category: product.category || "",
+        brand: product.brand || "",
+        description: product.description || "",
+        price: product.price || "",
+        stock: product.stock || "",
+        sku: product.sku || "",
+        availability: product.availability || "In Stock",
+        warranty: product.warranty || "No Warranty",
+        specs: product.specs || { processor: "", ram: "", storage: "", display: "", others: "" },
+        images: product.images || [],
+        features: product.features || [],
+      });
+    }
+  }, [product]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name in form.specs) {
@@ -51,7 +58,6 @@ export default function AddProductPage() {
     }
   };
 
-  // =================== Feature Handlers ===================
   const addFeature = () => setForm(prev => ({ ...prev, features: [...prev.features, ""] }));
   const updateFeature = (index, value) => {
     const newFeatures = [...form.features];
@@ -64,81 +70,60 @@ export default function AddProductPage() {
     setForm(prev => ({ ...prev, features: newFeatures }));
   };
 
-
-
-  // =================== Submit ===================
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!userId) return alert("You must be logged in");
 
-    if (!shopId) {
-      alert("Cannot find your shop. Are you logged in?");
-      return;
-    }
-
-    // basic validation
+    // ---------------- Validation ----------------
     const newErrors = {};
-    if (!form.title) newErrors.title = "Product title is required";
+    if (!form.title) newErrors.title = "Title is required";
     if (!form.category) newErrors.category = "Category is required";
     if (!form.brand) newErrors.brand = "Brand is required";
     if (!form.description) newErrors.description = "Description is required";
     if (!form.price) newErrors.price = "Price is required";
-    if (!form.stock) newErrors.stock = "Stock quantity is required";
+    if (!form.stock) newErrors.stock = "Stock is required";
     setErrors(newErrors);
     if (Object.keys(newErrors).length) return;
 
+    setLoading(true);
     try {
-      setLoading(true);
+      const endpoint = product ? "/api/products/update" : "/api/products/create";
+      
+      const payload = product
+        ? { productId: product.id, userId, ...form } // EDIT: send userId + all fields
+        : { ...form, shop: { shopOwnerId: userId } }; // CREATE: send shopOwnerId
 
-      const payload = {
-        ...form,
-        shop: {
-          shopId,
-          shopName: session?.shop?.name || session?.user?.shopName || "My Shop",
-          isOfficial: session?.shop?.isOfficial || session?.user?.isOfficial || false,
-          shopOwnerId: session?.user?.id
-        },
-      };
-
-      const res = await fetch("/api/products/create", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Failed to create product ❌");
-        setLoading(false);
-        return;
-      }
+      if (!res.ok) return alert(data.error || "Failed to save product");
 
-      alert("Product created successfully ✅");
-      router.push("/manage-products?added=1");
+      alert(product ? "Product updated ✅" : "Product created ✅");
+      onSaved?.();
+      fetchProducts?.();
+      onClose?.();
     } catch (err) {
       console.error(err);
-      alert("Something went wrong ❌");
+      alert("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="max-w-[1000px] mx-auto w-full p-6">
-      <Header />
-
+    <div className="bg-white border border-gray-300 rounded p-6 mb-6 shadow">
       <form className="space-y-6" onSubmit={handleSubmit}>
-        {/* Product Details */}
-        <ProductIdentity errors={errors} onChange={handleChange} value={form} />
-        <PricingInventory errors={errors} onChange={handleChange} value={form} />
-        <ProductImages onImagesChange={(imgs) => setForm({ ...form, images: imgs })} images={form.images} />
-        <Specifications onChange={handleChange} value={form.specs} />
+        <ProductIdentity errors={errors} value={form} onChange={handleChange} />
+        <PricingInventory errors={errors} value={form} onChange={handleChange} />
+        <ProductImages images={form.images} onImagesChange={(imgs) => setForm({ ...form, images: imgs })} />
+        <Specifications value={form.specs} onChange={handleChange} />
 
-        {/* Features */}
         <div className="bg-white border border-gray-300 rounded shadow-sm p-6">
-          <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">
-            Product Features
-          </h2>
-
+          <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Product Features</h2>
           {form.features.map((feat, i) => (
             <div key={i} className="flex gap-2 mb-2">
               <input
@@ -148,28 +133,16 @@ export default function AddProductPage() {
                 onChange={(e) => updateFeature(i, e.target.value)}
                 className="flex-1 px-3 py-2 border border-gray-400 rounded-md"
               />
-              <button
-                type="button"
-                onClick={() => removeFeature(i)}
-                className="px-3 py-2 bg-red-500 text-white rounded"
-              >
+              <button type="button" onClick={() => removeFeature(i)} className="px-3 py-2 bg-red-500 text-white rounded">
                 Remove
               </button>
             </div>
           ))}
-
-          <button
-            type="button"
-            onClick={addFeature}
-            className="px-4 py-2 bg-amazon-yellow font-bold rounded"
-          >
-            + Add Feature
-          </button>
+          <button type="button" onClick={addFeature} className="px-4 py-2 bg-amazon-yellow font-bold rounded">+ Add Feature</button>
         </div>
 
-        {/* Submit Buttons */}
         <ActionButtons loading={loading} />
       </form>
-    </main>
+    </div>
   );
 }

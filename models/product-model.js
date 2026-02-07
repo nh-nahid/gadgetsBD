@@ -15,7 +15,7 @@ const imageSchema = new Schema({
 });
 
 const shopSchema = new Schema({
-  shopOwnerId: { type: Schema.Types.ObjectId, ref: "users", required: true }, // this will be used in orders
+  shopOwnerId: { type: Schema.Types.ObjectId, ref: "users", required: true },
   shopName: { type: String, required: true },
   isOfficial: { type: Boolean, default: false },
 });
@@ -36,6 +36,12 @@ const productSchema = new Schema(
     // 🔹 Inventory
     stock: { type: Number, required: true, default: 0 },
     isInStock: { type: Boolean, default: true },
+    stockStatus: {
+      type: String,
+      enum: ["inStock", "lowStock", "outOfStock"],
+      default: "inStock",
+      index: true,
+    },
 
     // 🔹 Category & brand
     category: { type: String, required: true, index: true },
@@ -63,6 +69,7 @@ const productSchema = new Schema(
 
     // 🔹 Flags
     isActive: { type: Boolean, default: true },
+    published: { type: Boolean, default: true, index: true }, // ✅ New field for publish/unpublish
   },
   { timestamps: true }
 );
@@ -71,6 +78,15 @@ const productSchema = new Schema(
 productSchema.pre("save", function (next) {
   // Stock sync
   this.isInStock = this.stock > 0;
+
+  // Stock status calculation
+  if (this.stock === 0) {
+    this.stockStatus = "outOfStock";
+  } else if (this.stock <= 5) {
+    this.stockStatus = "lowStock";
+  } else {
+    this.stockStatus = "inStock";
+  }
 
   // Rating sync
   if (this.reviews.length > 0) {
@@ -86,7 +102,6 @@ productSchema.pre("save", function (next) {
 });
 
 // ---------------- Virtual for shopOwnerId ----------------
-// This makes it easy to access shopOwnerId when creating orders
 productSchema.virtual("shopOwnerId").get(function () {
   return this.shop?.shopOwnerId;
 });

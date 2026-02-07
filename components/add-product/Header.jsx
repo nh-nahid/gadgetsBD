@@ -12,7 +12,7 @@ export default function Header() {
             </div>
 
             <Link
-                href="/manageList"
+                href="/manage-products"
                 className="text-amazon-blue hover:underline text-sm flex items-center gap-1"
             >
                 <ArrowLeft className="w-4 h-4" />
