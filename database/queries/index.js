@@ -282,5 +282,79 @@ export async function getOrdersForShopOwner(shopOwnerId) {
 
 
 
+/* ======================
+   Create Product
+====================== */
+export async function createProduct({
+  title,
+  description,
+  price,
+  stock = 0,
+  category,
+  brand,
+  features = [],
+  images = [],
+  warranty,
+  shopOwnerId,
+}) {
+  if (!shopOwnerId) {
+    throw new Error("shopOwnerId is required");
+  }
+
+  await dbConnect();
+
+
+  const shop = await shopModel.findOne({ shopOwnerId }).lean();
+  if (!shop) {
+    throw new Error("Shop not found for this owner");
+  }
+
+
+  if (!title || !description || !price || !category || !brand) {
+    throw new Error("Missing required product fields");
+  }
+
+  // 🔗 Slug generation (safe)
+  const slugBase = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  let slug = slugBase;
+  let count = 1;
+
+  while (await productModel.exists({ slug })) {
+    slug = `${slugBase}-${count++}`;
+  }
+
+
+  const product = await productModel.create({
+    title: title.trim(),
+    slug,
+    description: description.trim(),
+    features,
+
+    price: Number(price),
+    stock: Number(stock) || 0,
+
+    category,
+    brand,
+
+    images,
+
+    shopOwnerId,
+    shop: {
+      shopOwnerId,
+      shopName: shop.shopName,
+      isOfficial: shop.isOfficial ?? false,
+    },
+
+    warranty: warranty || "No warranty",
+    isPublished: false, 
+    isActive: true,     
+  });
+
+  return replaceMongoIdInObject(product);
+}
 
 
