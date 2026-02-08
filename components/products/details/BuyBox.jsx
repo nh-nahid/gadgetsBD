@@ -125,20 +125,22 @@ export default function BuyBox({ product }) {
     }
   };
 
-  const buyNow = () => {
-    if (!userId) {
-      alert("Please login to purchase items.");
-      return;
-    }
-    if (product.stock === 0) {
-      alert("Product out of stock");
-      return;
-    }
+const buyNow = () => {
+  if (!userId) {
+    alert("Please login to purchase items.");
+    return;
+  }
 
-    router.push(
-      `/payment?buyNow=true&productId=${product.id}&qty=${quantity}`
-    );
-  };
+  if (product.stock === 0) {
+    alert("Product out of stock");
+    return;
+  }
+
+  router.push(
+    `/payment?buyNow=true&slug=${product.slug}&qty=${quantity}`
+  );
+};
+
 
   const cartButtonLabel = !inCart
     ? "Add to Cart"

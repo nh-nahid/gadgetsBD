@@ -25,7 +25,7 @@ const Footer = () => {
                 <div>
                     <h3 className="font-bold mb-4">Get to Know Us</h3>
                     <ul className="space-y-2 text-gray-300">
-                        <li><Link href="/about" className="hover:underline">About Gadgets BD</Link></li>
+                        <li><Link href="#" className="hover:underline">About Gadgets BD</Link></li>
                         <li><Link href="#" className="hover:underline">Careers</Link></li>
                         <li><Link href="/shops" className="hover:underline">Our Top Brands</Link></li>
                     </ul>
@@ -33,9 +33,9 @@ const Footer = () => {
                 <div>
                     <h3 className="font-bold mb-4">Make Money with Us</h3>
                     <ul className="space-y-2 text-gray-300">
-                        <li><Link href="/register" className="hover:underline">Sell on Gadgets BD</Link></li>
-                        <li><Link href="/add-product" className="hover:underline">Supply to Gadgets BD</Link></li>
-                        <li><Link href="/manage-product" className="hover:underline">Become an Affiliate</Link></li>
+                        <li><Link href="#" className="hover:underline">Sell on Gadgets BD</Link></li>
+                        <li><Link href="#" className="hover:underline">Supply to Gadgets BD</Link></li>
+                        <li><Link href="#" className="hover:underline">Become an Affiliate</Link></li>
                     </ul>
                 </div>
                 <div>
@@ -53,7 +53,7 @@ const Footer = () => {
                         <li><Link href="/orders" className="hover:underline">Your Orders</Link></li>
                         <li><Link href="#" className="hover:underline">Shipping Rates & Policies</Link></li>
                         <li><Link href="#" className="hover:underline">Returns & Replacements</Link></li>
-                        <li><Link href="/forgot-password" className="hover:underline">Manage Your Content and Devices</Link></li>
+                        <li><Link href="#" className="hover:underline">Manage Your Content and Devices</Link></li>
                         <li><Link href="#" className="hover:underline">Help</Link></li>
                     </ul>
                 </div>

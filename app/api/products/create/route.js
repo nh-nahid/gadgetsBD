@@ -4,6 +4,7 @@ import { productModel } from "@/models/product-model";
 import { shopModel } from "@/models/shop-model";
 import { NextResponse } from "next/server";
 import { replaceMongoIdInObject } from "@/utils/data-util";
+import { slugify } from "@/utils/slugify";
 
 export const POST = async (req) => {
   try {
@@ -22,7 +23,8 @@ export const POST = async (req) => {
       return NextResponse.json({ error: "Cannot find your shop" }, { status: 404 });
     }
 
-    const slug = body.slug || body.title.toLowerCase().replace(/\s+/g, "-");
+    const slug = body.slug ? slugify(body.slug) : slugify(body.title);
+
 
     const images = (body.images || []).map((img, idx) => ({
       ...img,

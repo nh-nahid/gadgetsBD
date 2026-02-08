@@ -55,7 +55,7 @@ const OrderCard = ({ order, role }) => {
             product={product}
             isFirst={idx === 0}
             role={role}
-            orderId={order._id?.toString()}        
+            orderId={order.id?.toString()}        
             orderNumber={order.orderNumber}        
           />
         ))}

@@ -9,8 +9,8 @@ const PaymentClient = () => {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
 
-
-  const buyNowProductId = searchParams.get("productId");
+  // ✅ BUY NOW → use slug instead of productId
+  const buyNowSlug = searchParams.get("slug");
   const buyNowQty = Number(searchParams.get("qty") || 1);
   const fromCart = searchParams.get("fromCart") === "true";
 
@@ -29,13 +29,19 @@ const PaymentClient = () => {
     if (buyNowProduct?.productId === productId) {
       setBuyNowProduct(prev => ({ ...prev, quantity: qty }));
     } else {
-      setCartItems(prev => prev.map(item => String(item.productId) === String(productId) ? { ...item, quantity: qty } : item));
+      setCartItems(prev =>
+        prev.map(item =>
+          String(item.productId) === String(productId)
+            ? { ...item, quantity: qty }
+            : item
+        )
+      );
     }
   };
 
   const handleRemoveItem = (productId) => {
     setCartItems(prev => prev.filter(item => String(item.productId) !== String(productId)));
-    setBuyNowProduct(prev => prev?.productId === productId ? null : prev);
+    setBuyNowProduct(prev => (prev?.productId === productId ? null : prev));
   };
 
   useEffect(() => {
@@ -45,30 +51,33 @@ const PaymentClient = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-       
+        // 🛒 CART
         const resCart = await fetch(`/api/cart/${userId}`);
         let items = [];
+
         if (resCart.ok) {
           const cartData = await resCart.json();
-          items = cartData[0]?.items?.map(item => ({
-            productId: String(item.productId || item.id),
-            id: String(item.id || item._id),
-            title: item.title,
-            price: item.price,
-            quantity: item.quantity,
-            image: item.image || "",
-            seller: item.shopName || "Unknown Seller",
-            stock: item.stock,
-            freeShipping: item.freeShipping,
-            slug: item.slug,
-          })) || [];
+          items =
+            cartData[0]?.items?.map(item => ({
+              productId: String(item.productId || item.id),
+              id: String(item.id || item._id),
+              title: item.title,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image || "",
+              seller: item.shopName || "Unknown Seller",
+              stock: item.stock,
+              freeShipping: item.freeShipping,
+              slug: item.slug,
+            })) || [];
         }
 
-     
-        if (buyNowProductId && !fromCart) {
-          const resProduct = await fetch(`/api/products/${buyNowProductId}`);
+        // ⚡ BUY NOW (slug-based)
+        if (buyNowSlug && !fromCart) {
+          const resProduct = await fetch(`/api/products/${buyNowSlug}`);
           if (resProduct.ok) {
             const productData = await resProduct.json();
+
             setBuyNowProduct({
               productId: String(productData.id),
               id: String(productData.id),
@@ -76,32 +85,37 @@ const PaymentClient = () => {
               price: productData.price,
               image: productData.images?.[0]?.url || "",
               seller: productData.shop?.shopName || "Unknown Seller",
-              quantity: buyNowQty,
+              quantity: Math.min(buyNowQty, productData.stock),
               stock: productData.stock,
               slug: productData.slug,
               freeShipping: productData.freeDelivery || false,
             });
-            items = items.filter(i => String(i.productId) !== String(buyNowProductId));
+
+            // remove from cart if exists
+            items = items.filter(i => i.slug !== buyNowSlug);
           }
         }
 
-     
+        // 🧺 FROM CART CHECKOUT
         if (fromCart) {
-          const productIds = searchParams.getAll("productId");
+          const productIds = searchParams.getAll("productId").map(String);
           const qtys = searchParams.getAll("qty").map(Number);
-          const normalizedIds = productIds.map(id => String(id));
 
-          const selected = items.filter(item => normalizedIds.includes(String(item.productId)));
+          const selected = items.filter(item =>
+            productIds.includes(String(item.productId))
+          );
+
           selected.forEach(item => {
-            const idx = normalizedIds.indexOf(String(item.productId));
+            const idx = productIds.indexOf(String(item.productId));
             item.quantity = qtys[idx] || 1;
           });
+
           setCartItems(selected);
         } else {
           setCartItems(items);
         }
 
-   
+        // 📦 ADDRESS
         const resUser = await fetch(`/api/users/${session.user.email}`);
         if (resUser.ok) {
           const data = await resUser.json();
@@ -118,17 +132,19 @@ const PaymentClient = () => {
   }, [status, userId]);
 
   if (loading) {
-  return (
-    <div className="flex flex-col items-center justify-center py-12">
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amazon-blue mb-4"></div>
         <p className="text-gray-700 text-lg font-medium">
           Loading your checkout...
         </p>
       </div>
-  );
-}
+    );
+  }
 
-  if (!cartItems.length && !buyNowProduct) return <p className="text-center py-10">Your cart is empty.</p>;
+  if (!cartItems.length && !buyNowProduct) {
+    return <p className="text-center py-10">Your cart is empty.</p>;
+  }
 
   return (
     <>

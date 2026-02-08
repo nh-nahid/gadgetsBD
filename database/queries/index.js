@@ -111,11 +111,12 @@ export async function getAllShops({ page = 1, limit = 6, sortBy } = {}) {
 }
 
 
-export async function getShopById(shopId) {
-  if (!shopId) return null;
-  if (!mongoose.Types.ObjectId.isValid(shopId)) return null;
+export async function getShopById(shopOwnerId) {
+   if (!shopOwnerId) return null;
 
-  const shop = await shopModel.findById(shopId).lean();
+  if (!mongoose.Types.ObjectId.isValid(shopOwnerId)) return null;
+
+  const shop = await shopModel.findOne({ shopOwnerId }).lean();
   return shop ? replaceMongoIdInObject(shop) : null;
 }
 

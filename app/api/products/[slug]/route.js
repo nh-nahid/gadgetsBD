@@ -4,13 +4,14 @@ import { replaceMongoIdInObject } from "@/utils/data-util";
 import { NextResponse } from "next/server";
 
 export async function GET(req, { params }) {
-  const { id } = params;
-  if (!id)
-    return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+  const { slug } = params; 
+  if (!slug)
+    return NextResponse.json({ error: "Product slug is required" }, { status: 400 });
 
   try {
     await dbConnect();
-    const product = await productModel.findById(id).lean();
+
+    const product = await productModel.findOne({ slug }).lean(); 
     if (!product)
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
 

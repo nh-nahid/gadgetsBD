@@ -5,6 +5,7 @@ import CategoryCard from "./CategoryCard";
 import SignInCategoryCard from "./SignInCategoryCard";
 import { slugify } from "@/utils/slugify";
 
+
 const CategoryGrid = ({ products }) => {
   const { data: user } = useSession();
   const categories = {};

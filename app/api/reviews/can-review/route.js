@@ -3,8 +3,8 @@ import orderModel from "@/models/order-model";
 import { reviewModel } from "@/models/review-model";
 import { dbConnect } from "@/services/mongo";
 import mongoose from "mongoose";
-
 export const dynamic = 'force-dynamic';
+
 
 export async function GET(req) {
 await dbConnect();

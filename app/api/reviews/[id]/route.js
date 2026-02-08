@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { reviewModel } from "@/models/review-model";
 import orderModel from "@/models/order-model";
 import { dbConnect } from "@/services/mongo";
-import mongoose from "mongoose";
 
-await dbConnect();
 
 export async function PUT(req, { params }) {
+await dbConnect();
+
   try {
     const reviewId = params.id;
     const body = await req.json();
@@ -51,6 +51,8 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+ await dbConnect();
+
   try {
     const reviewId = params.id;
     const body = await req.json();

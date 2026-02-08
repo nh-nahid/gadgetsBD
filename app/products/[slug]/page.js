@@ -16,14 +16,14 @@ import { notFound } from "next/navigation";
 const ProductDetailsPage = async ({ params }) => {
   const { slug } = params;
 
-  // Fetch main product
+
   const product = await getProductBySlug(slug);
   if (!product) notFound();
+console.log(product);
 
-  // Fetch related products (limit 6)
   const relatedProductsData = await getFeaturedProducts(6);
   const relatedProducts = relatedProductsData
-    .filter((p) => p.id !== product.id) // exclude current product
+    .filter((p) => p.id !== product.id) 
     .map((p) => ({
       id: p.id,
       slug: p.slug,
@@ -32,7 +32,7 @@ const ProductDetailsPage = async ({ params }) => {
       images: p.images || [],
     }));
 
-  // Breadcrumbs
+
   const breadcrumbs = [
     { label: "Home", href: "/" },
     product.category
@@ -41,11 +41,11 @@ const ProductDetailsPage = async ({ params }) => {
     { label: product.title },
   ].filter(Boolean);
 
-  // Images
+
   const mainImage = product.images?.find((img) => img.isMain)?.url || product.images?.[0]?.url || "/placeholder.png";
   const thumbnails = product.images?.map((img) => img.url) || [];
 
-  // UI product for BuyBox / ProductInfo
+  
   const uiProduct = {
     name: product.title,
     storeName: product.shop.shopName,
@@ -58,7 +58,7 @@ const ProductDetailsPage = async ({ params }) => {
     stock: `${product.stock} units available`,
   };
 
-  // Fetch first 5 reviews
+
   const reviewsData = await getReviewsByProductId({ productId: product.id, limit: 5 });
   const reviews = reviewsData.map((review, index) => ({
     id: review.id,
@@ -69,34 +69,40 @@ const ProductDetailsPage = async ({ params }) => {
     date: review.date ? new Date(review.date).toLocaleDateString() : "",
     comment: review.comment,
     verified: review.verified ?? true,
-    userId: review.userId, // needed for client-side edit/delete logic
+    userId: review.userId, 
   }));
 
-  // Fetch shop info
-  const shopData = await getShopById(product.shop.shopId);
-  const shop = shopData
-    ? {
-        name: shopData.shopName,
-        description: shopData.description || "",
-        rating: shopData.rating ?? 0,
-        reviewCount: shopData.reviewCount ?? 0,
-        productsCount: shopData.productsCount ?? 0,
-        joined: shopData.joinedAt ? new Date(shopData.joinedAt).toLocaleDateString() : "—",
-        responseTime: shopData.responseTime || "Within 2 hours",
-        policies: shopData.policies || [],
-        link: shopData.id ? `/shops/${shopData.id}` : null,
-      }
-    : {
-        name: product.shop.shopName,
-        description: "",
-        rating: 0,
-        reviewCount: 0,
-        productsCount: 0,
-        joined: "—",
-        responseTime: "Within 2 hours",
-        policies: [],
-        link: null,
-      };
+
+  const shopData = await getShopById(product?.shop?.shopOwnerId);
+  
+const shop = shopData
+  ? {
+      name: shopData.name || product.shop.shopName,
+      description: shopData.description || "",
+      rating: shopData.rating?.average ?? 0,
+      reviewCount: shopData.rating?.count ?? 0,
+      productsCount: shopData.productsCount ?? 0,
+      joined: shopData.createdAt ? new Date(shopData.createdAt).toLocaleDateString() : "—",
+      responseTime: shopData.responseTime || "Within 2 hours",
+      policies: shopData.policies || [],
+      link: shopData.shopSlug ? `/shops/${shopData.shopSlug}` : null, 
+      coverImage: shopData.coverImage || null,
+      shopSlug: shopData.shopSlug || null, 
+    }
+  : {
+      name: product.shop.shopName,
+      description: "",
+      rating: 0,
+      reviewCount: 0,
+      productsCount: 0,
+      joined: "—",
+      responseTime: "Within 2 hours",
+      policies: [],
+      link: null,
+      coverImage: null,
+      shopSlug: null,
+    };
+;
 
 
   return (

@@ -166,11 +166,11 @@ const OrderProduct = ({
         !isFirst ? "pt-6 border-t border-gray-200" : ""
       }`}
     >
-      {/* Product Image */}
+     
       <div className="w-32 h-32 flex-shrink-0 relative">
         <Image
           src={product.image || "/placeholder.png"}
-          alt={product.name}
+          alt={product.title}
           fill
           sizes="128px"
           className="object-cover border border-gray-200 rounded"

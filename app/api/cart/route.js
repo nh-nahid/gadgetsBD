@@ -2,9 +2,9 @@ import { cartModel } from "@/models/cart-model";
 import { dbConnect } from "@/services/mongo";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
-import { productModel } from "@/models/product-model"; // For stock check
+import { productModel } from "@/models/product-model"; 
 
-// ---------------- ADD / UPDATE CART ITEM ----------------
+
 export const POST = async (request) => {
   try {
     const {
@@ -26,11 +26,9 @@ export const POST = async (request) => {
 
     await dbConnect();
 
-    // ✅ Fetch latest stock from product DB
     const product = await productModel.findById(productId).select("stock");
     if (!product) return new NextResponse("Product not found", { status: 404 });
 
-    // Clamp quantity to stock
     const safeQty = Math.min(quantity, product.stock);
 
     const newItem = {
@@ -50,14 +48,14 @@ export const POST = async (request) => {
       userId: new mongoose.Types.ObjectId(userId),
     });
 
-    // --- CASE 1: Cart exists ---
+
     if (cart) {
       const existingItem = cart.items.find(
         (item) => item.productId.toString() === productId
       );
 
       if (existingItem) {
-        existingItem.quantity = safeQty; // Update quantity to safeQty
+        existingItem.quantity = safeQty; 
         existingItem.shopName = newItem.shopName;
       } else {
         cart.items.push(newItem);
@@ -67,7 +65,7 @@ export const POST = async (request) => {
       return NextResponse.json(cart, { status: 200 });
     }
 
-    // --- CASE 2: Cart does NOT exist ---
+
     cart = await cartModel.create({
       userId: new mongoose.Types.ObjectId(userId),
       items: [newItem],
@@ -80,7 +78,6 @@ export const POST = async (request) => {
   }
 };
 
-// ---------------- GET CART ----------------
 export const GET = async (request) => {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get("userId");
@@ -96,7 +93,7 @@ export const GET = async (request) => {
   return NextResponse.json(cart || { items: [] });
 };
 
-// ---------------- DELETE ITEM FROM CART ----------------
+
 export const DELETE = async (request) => {
   try {
     const { userId, productId } = await request.json();
