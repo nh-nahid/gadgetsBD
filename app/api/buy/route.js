@@ -1,21 +1,31 @@
-
 import { productModel } from "@/models/product-model";
 import { dbConnect } from "@/services/mongo";
+import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
 
-export default async function handler(req, res) {
+export async function POST(request) {
   await dbConnect();
-  const { productId, quantity } = req.body;
+
+  const { productId, quantity } = await request.json();
 
   const product = await productModel.findById(productId);
-  if (!product) return res.status(404).json({ message: "Product not found" });
+  if (!product) {
+    return NextResponse.json(
+      { message: "Product not found" },
+      { status: 404 }
+    );
+  }
 
-  if (quantity > product.stock)
-    return res.status(400).json({ message: "Not enough stock" });
+  if (quantity > product.stock) {
+    return NextResponse.json(
+      { message: "Not enough stock" },
+      { status: 400 }
+    );
+  }
 
-  // Reduce stock
   product.stock -= quantity;
   await product.save();
 
-  res.status(200).json({ success: true });
+  return NextResponse.json({ success: true }, { status: 200 });
 }
