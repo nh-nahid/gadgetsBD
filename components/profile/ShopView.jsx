@@ -23,7 +23,6 @@ export default function ShopView({ shop }) {
 
   return (
     <div className="space-y-6">
-      {/* Shop Card Preview */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300 flex justify-between items-center">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -72,7 +71,6 @@ export default function ShopView({ shop }) {
         </div>
       </div>
 
-      {/* Shop Details */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">Shop Information</h2>

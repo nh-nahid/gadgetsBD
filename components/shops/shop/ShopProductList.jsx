@@ -12,7 +12,6 @@ export default function ShopProductList({ products }) {
           className="bg-white rounded-sm shadow-sm overflow-hidden"
         >
           <Link href={`/products/${product.slug}`}>
-            {/* Smaller square image */}
             <div className="relative w-full h-32 sm:h-36 md:h-40 lg:h-44 overflow-hidden rounded-t-lg">
               <Image
                 src={product?.images?.[0]?.url || "https://placehold.co/200x100"}
@@ -22,7 +21,6 @@ export default function ShopProductList({ products }) {
               />
             </div>
 
-            {/* Product Info */}
             <div className="p-2 sm:p-3">
               <h3 className="font-bold text-sm sm:text-base line-clamp-2">
                 {product.title}

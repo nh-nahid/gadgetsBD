@@ -16,7 +16,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Convert the file to buffer for ImageKit
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 

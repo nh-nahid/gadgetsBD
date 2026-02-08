@@ -28,7 +28,6 @@ const shopSchema = new Schema(
   { timestamps: true }
 );
 
-// ✅ Clear cached model to prevent old schema usage
 delete mongoose.models.shops;
 
 export const shopModel =

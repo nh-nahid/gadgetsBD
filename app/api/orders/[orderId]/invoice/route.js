@@ -1,4 +1,3 @@
-// app/api/orders/[orderId]/invoice/route.js
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/services/mongo";
 import orderModel from "@/models/order-model";
@@ -12,7 +11,6 @@ export async function GET(req, { params }) {
     const { orderId } = params;
     console.log("Invoice API called with params:", { orderId });
 
-    // Fetch the order
     const order = await orderModel.findOne({ orderNumber: orderId }).lean();
     if (!order) {
       return NextResponse.json(
@@ -22,10 +20,10 @@ export async function GET(req, { params }) {
     }
     console.log("Order found:", order.orderNumber);
 
-    // Generate PDF using the reusable function
+
     const pdfBuffer = await generateInvoicePDF(order);
 
-    // Return the PDF as a downloadable file
+
     return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {

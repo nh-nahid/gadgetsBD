@@ -9,12 +9,12 @@ export default function StarRating({ value = 0, onChange, size = 5 }) {
         <svg
           key={star}
           xmlns="http://www.w3.org/2000/svg"
-          fill={star <= value ? "#FBBF24" : "none"} // yellow if selected
+          fill={star <= value ? "#FBBF24" : "none"} 
           viewBox="0 0 24 24"
           stroke="#FBBF24"
           strokeWidth={2}
           className="w-5 h-5 cursor-pointer"
-          onClick={() => onChange(star)} // ✅ Update rating
+          onClick={() => onChange(star)} 
         >
           <path
             strokeLinecap="round"

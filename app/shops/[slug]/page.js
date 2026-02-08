@@ -18,7 +18,6 @@ export default async function ShopPage({ params }) {
     );
   }
 
-
   const allProducts = await getAllProducts({ limit: 50 }); 
   
 const products = allProducts.filter((p) => {
@@ -31,13 +30,11 @@ const products = allProducts.filter((p) => {
 
   return (
     <main className="max-w-[1500px] mx-auto p-4 py-8">
-      {/* Shop header image */}
+
       <ShopHeader shop={shop} />
 
-      {/* Shop description and info */}
       <ShopInfo shop={shop} />
 
-      {/* Products */}
       <h2 className="text-xl font-bold mb-4 mt-8">Products</h2>
       <ShopProductList products={products} />
     </main>

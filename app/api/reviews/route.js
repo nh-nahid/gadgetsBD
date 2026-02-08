@@ -4,11 +4,10 @@ import orderModel from "@/models/order-model";
 import { dbConnect } from "@/services/mongo";
 import mongoose from "mongoose";
 
-// Connect to DB
-await dbConnect();
 
-// ---------------- GET REVIEWS ----------------
+
 export async function GET(req) {
+  await dbConnect();
   try {
     const { searchParams } = new URL(req.url);
     const productId = searchParams.get("productId");
@@ -20,7 +19,6 @@ export async function GET(req) {
 
     const skip = (page - 1) * limit;
 
-    // Fetch all reviews for the product that are not hidden
     const reviews = await reviewModel
       .find({ productId, hidden: false })
       .sort({ createdAt: -1 })
@@ -50,8 +48,9 @@ export async function GET(req) {
   }
 }
 
-// ---------------- POST REVIEW ----------------
 export async function POST(req) {
+  await dbConnect();
+
   try {
     const body = await req.json();
     const { productId, userId, name, rating, title, comment } = body;
@@ -60,7 +59,6 @@ export async function POST(req) {
       return NextResponse.json({ message: "Missing fields" }, { status: 400 });
     }
 
-    // Check if user already reviewed this product
     const existing = await reviewModel.findOne({ productId, userId });
     if (existing)
       return NextResponse.json(
@@ -68,7 +66,6 @@ export async function POST(req) {
         { status: 400 }
       );
 
-    // Verify that user purchased this product at least once
     const hasPurchased = await orderModel.exists({
       userId,
       "payment.status": "paid",
@@ -81,7 +78,7 @@ export async function POST(req) {
         { status: 403 }
       );
 
-    // Create initials for review
+
     const initials = name
       .split(" ")
       .map((n) => n[0])
@@ -89,7 +86,6 @@ export async function POST(req) {
       .slice(0, 3)
       .toUpperCase();
 
-    // Create new review
     const newReview = await reviewModel.create({
       productId,
       userId,

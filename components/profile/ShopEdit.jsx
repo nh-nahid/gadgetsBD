@@ -1,8 +1,8 @@
 "use client";
 
 import { useShop } from "@/app/context/ShopContext";
-import { uploadToImageKit } from "@/lib/uploadToImageKit";
 import { Upload } from "lucide-react";
+import Image from "next/image";
 import React, { useState } from "react";
 
 export default function ShopEdit({ shop, setIsEditMode  }) {
@@ -12,7 +12,6 @@ export default function ShopEdit({ shop, setIsEditMode  }) {
   const [loading, setLoading] = useState(false);
 const { setShop } = useShop();
 
-  /* ================= VALIDATION ================= */
   const validate = (data) => {
     const err = {};
     if (!data.name) err.name = "Shop name is required";
@@ -34,7 +33,6 @@ const { setShop } = useShop();
     return err;
   };
 
-  /* ================= IMAGE ================= */
   const handleBannerChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -57,7 +55,6 @@ const { setShop } = useShop();
     setBannerPreview(URL.createObjectURL(file));
   };
 
-  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form submitted");
@@ -86,7 +83,6 @@ const { setShop } = useShop();
 
     let coverImage = shop.coverImage;
 
-    // ================= UPLOAD BANNER IF SELECTED =================
     if (bannerFile) {
       try {
         const bannerForm = new FormData();
@@ -112,7 +108,6 @@ const { setShop } = useShop();
       }
     }
 
-    // ================= SHOP UPDATE PAYLOAD =================
     const payload = {
       name: formData.name,
       ownerName: formData.ownerName,
@@ -162,7 +157,7 @@ const { setShop } = useShop();
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      {/* Basic Info */}
+
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -233,7 +228,6 @@ const { setShop } = useShop();
         </div>
       </div>
 
-      {/* Location & Specialization */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -295,7 +289,6 @@ const { setShop } = useShop();
         </div>
       </div>
 
-      {/* Shop Banner */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -305,12 +298,16 @@ const { setShop } = useShop();
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-bold mb-2">Current Banner</label>
-            <div className="h-48 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 rounded-md border border-gray-300">
-              <img
-                src={bannerPreview}
-                className="w-full h-full object-cover"
-                alt="Current Banner"
-              />
+            <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 rounded-md border border-gray-300">
+              {bannerPreview && (
+                <Image
+                  src={bannerPreview}
+                  alt="Current Banner"
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                />
+              )}
             </div>
           </div>
 
@@ -321,7 +318,6 @@ const { setShop } = useShop();
               className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md p-8 text-center cursor-pointer hover:border-amazon-blue transition-colors"
             >
               <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-
               <p className="text-sm text-gray-600 mb-1">
                 Click to upload or drag and drop
               </p>
@@ -344,8 +340,6 @@ const { setShop } = useShop();
         </div>
       </div>
 
-
-      {/* Additional Info */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -405,7 +399,6 @@ const { setShop } = useShop();
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
         <button
           onClick={() => setIsEditMode(false)}

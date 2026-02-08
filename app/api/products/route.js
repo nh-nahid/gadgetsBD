@@ -2,8 +2,6 @@ import { getAllProducts } from "@/database/queries";
 import { dbConnect } from "@/services/mongo";
 
 
-
-
 export async function GET(req) {
   try {
     await dbConnect(); 

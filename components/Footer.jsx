@@ -4,17 +4,16 @@ import Link from 'next/link';
 import React from 'react';
 
 const Footer = () => {
-    // Function to scroll to top
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
-            behavior: 'smooth', // smooth scrolling
+            behavior: 'smooth', 
         });
     };
 
     return (
         <footer className="bg-amazon-light text-white mt-8">
-            {/* Back to top */}
+           
             <div
                 onClick={scrollToTop}
                 className="bg-[#37475A] py-4 text-center hover:bg-[#485769] transition cursor-pointer"
@@ -22,7 +21,6 @@ const Footer = () => {
                 <span className="text-sm font-medium">Back to top</span>
             </div>
 
-            {/* Footer links */}
             <div className="max-w-[1000px] mx-auto py-12 px-4 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
                 <div>
                     <h3 className="font-bold mb-4">Get to Know Us</h3>
@@ -36,8 +34,8 @@ const Footer = () => {
                     <h3 className="font-bold mb-4">Make Money with Us</h3>
                     <ul className="space-y-2 text-gray-300">
                         <li><Link href="/register" className="hover:underline">Sell on Gadgets BD</Link></li>
-                        <li><Link href="/create" className="hover:underline">Supply to Gadgets BD</Link></li>
-                        <li><Link href="/manageList" className="hover:underline">Become an Affiliate</Link></li>
+                        <li><Link href="/add-product" className="hover:underline">Supply to Gadgets BD</Link></li>
+                        <li><Link href="/manage-product" className="hover:underline">Become an Affiliate</Link></li>
                     </ul>
                 </div>
                 <div>

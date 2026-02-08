@@ -33,7 +33,6 @@ export async function PUT(req) {
     if (!shop)
       return NextResponse.json({ error: "Shop not found" }, { status: 404 });
 
-    // Basic fields
     shop.name = name ?? shop.name;
     shop.ownerName = ownerName ?? shop.ownerName;
     shop.description = description ?? shop.description;
@@ -47,14 +46,14 @@ export async function PUT(req) {
     shop.phone = phone ?? shop.phone;
     shop.website = website ?? "";
 
-    // Location
+
     shop.location = shop.location || {};
     if (location) {
       shop.location.city = location.city ?? shop.location.city;
       shop.location.country = location.country ?? shop.location.country;
     }
 
-    // SpecializesIn & brands
+
     shop.specializesIn = Array.isArray(specializesIn)
       ? specializesIn
       : typeof specializesIn === "string"
@@ -67,7 +66,6 @@ export async function PUT(req) {
       ? brands.split(",").map((b) => b.trim())
       : shop.brands;
 
-    // Numbers
     shop.yearEstablished =
       yearEstablished != null ? Number(yearEstablished) : shop.yearEstablished;
     shop.employees =

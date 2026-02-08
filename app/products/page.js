@@ -56,17 +56,10 @@ const ProductsPage = async ({ searchParams }) => {
   const selectedAvailability = extractParam("availability");
   const selectedReviews = extractParam("review");
 
-  // Fetch all products
   let allProducts = await getAllProducts();
 
-  // Replace MongoDB _id with plain id
   allProducts = replaceMongoIdInArray(allProducts);
 
-  // -----------------------
-  // Apply filters
-  // -----------------------
-
-  // Category
   if (selectedCategories.length > 0) {
     allProducts = allProducts.filter((p) =>
       selectedCategories.some(
@@ -75,14 +68,12 @@ const ProductsPage = async ({ searchParams }) => {
     );
   }
 
-  // Brand
   if (selectedBrands.length > 0) {
     allProducts = allProducts.filter((p) =>
       selectedBrands.includes(normalize(p.brand))
     );
   }
 
-  // Price
   if (selectedPrices.length > 0) {
     allProducts = allProducts.filter((p) =>
       selectedPrices.some((slug) => {
@@ -92,21 +83,20 @@ const ProductsPage = async ({ searchParams }) => {
     );
   }
 
-  // Condition
   if (selectedConditions.length > 0) {
     allProducts = allProducts.filter((p) =>
       selectedConditions.includes(normalize(p.condition))
     );
   }
 
-  // Availability
+
   if (selectedAvailability.length > 0) {
     allProducts = allProducts.filter((p) =>
       selectedAvailability.includes(normalize(p.availability))
     );
   }
 
-  // Reviews (minimum rating)
+
   if (selectedReviews.length > 0) {
     allProducts = allProducts.filter((p) =>
       selectedReviews.some((slug) => {
@@ -116,7 +106,7 @@ const ProductsPage = async ({ searchParams }) => {
     );
   }
 
-  // Keyword search
+
   if (keyword) {
     const lowerKeyword = keyword.toLowerCase();
     allProducts = allProducts.filter(
@@ -126,9 +116,7 @@ const ProductsPage = async ({ searchParams }) => {
     );
   }
 
-  // -----------------------
-  // Sorting
-  // -----------------------
+
   const getCreatedAt = (product) => {
     if (product.createdAt) return new Date(product.createdAt);
     if (product.id) return new Date(parseInt(product.id.substring(0, 8), 16) * 1000);
@@ -153,13 +141,10 @@ const ProductsPage = async ({ searchParams }) => {
       break;
   }
 
-  // -----------------------
-  // Pagination
-  // -----------------------
+
   const products = allProducts.slice(0, limit);
   const hasMore = allProducts.length > limit;
 
-  // Build URL params for Load More
   const params = new URLSearchParams();
   params.set("limit", limit + BATCH_SIZE);
   selectedCategories.forEach((c) => params.append("category", c));
@@ -173,7 +158,6 @@ const ProductsPage = async ({ searchParams }) => {
 
   return (
     <main className="flex-1 max-w-[1500px] mx-auto w-full p-4">
-      {/* Header + Sort */}
       <div className="flex justify-between items-center mb-4">
         <SearchResultsHeader
           totalResults={allProducts.length}
@@ -191,16 +175,16 @@ const ProductsPage = async ({ searchParams }) => {
       </div>
 
       <div className="flex gap-6">
-        {/* Sidebar */}
+      
         <SidebarFilter />
 
-        {/* Product Grid */}
+       
         <div className="flex-1 space-y-4">
           {products.length > 0 ? (
             <>
               <ProductGrid products={products} />
 
-              {/* Load More */}
+             
               {hasMore && (
                 <div className="flex justify-center mt-4">
                   <Link

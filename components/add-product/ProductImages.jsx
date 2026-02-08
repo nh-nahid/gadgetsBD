@@ -3,6 +3,7 @@
 import { Upload, Plus } from "lucide-react";
 import { useState } from "react";
 import { uploadProductImage } from "@/lib/uploadProductImage";
+import Image from "next/image";
 
 export default function ProductImages({ images = [], onImagesChange }) {
   const [uploading, setUploading] = useState(false);
@@ -38,7 +39,7 @@ export default function ProductImages({ images = [], onImagesChange }) {
     }
 
     setUploading(false);
-    e.target.value = ""; // Reset input
+    e.target.value = "";
   };
 
   const setMainImage = (index) => {
@@ -59,9 +60,8 @@ export default function ProductImages({ images = [], onImagesChange }) {
 
       <div className="p-6 space-y-4">
         <div
-          className={`border-2 border-dashed border-gray-300 rounded-md p-8 text-center hover:border-amazon-blue cursor-pointer ${
-            uploading ? "opacity-60 pointer-events-none" : ""
-          }`}
+          className={`border-2 border-dashed border-gray-300 rounded-md p-8 text-center hover:border-amazon-blue cursor-pointer ${uploading ? "opacity-60 pointer-events-none" : ""
+            }`}
           onClick={() => document.getElementById("product-images").click()}
         >
           <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
@@ -79,33 +79,35 @@ export default function ProductImages({ images = [], onImagesChange }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {images.length
             ? images.map((img, i) => (
-                <div
-                  key={i}
-                  className={`border border-gray-300 rounded-md aspect-square flex items-center justify-center overflow-hidden relative cursor-pointer ${
-                    img.isMain ? "ring-2 ring-amazon-blue" : ""
+              <div
+                key={i}
+                className={`border border-gray-300 rounded-md aspect-square flex items-center justify-center overflow-hidden relative cursor-pointer ${img.isMain ? "ring-2 ring-amazon-blue" : ""
                   }`}
-                  onClick={() => setMainImage(i)}
-                >
-                  <img
-                    src={img.url}
-                    alt="Product"
-                    className="object-cover w-full h-full"
-                  />
-                  {img.isMain && (
-                    <span className="absolute top-1 right-1 bg-amazon-yellow px-1 text-xs font-bold text-black rounded-sm">
-                      Main
-                    </span>
-                  )}
-                </div>
-              ))
+                onClick={() => setMainImage(i)}
+              >
+                <Image
+                  src={img.url}
+                  alt="Product"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+
+                {img.isMain && (
+                  <span className="absolute top-1 right-1 bg-amazon-yellow px-1 text-xs font-bold text-black rounded-sm">
+                    Main
+                  </span>
+                )}
+              </div>
+            ))
             : Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="border-2 border-dashed border-gray-300 rounded-md aspect-square flex items-center justify-center hover:border-amazon-blue cursor-pointer"
-                >
-                  <Plus className="w-8 h-8 text-gray-400" />
-                </div>
-              ))}
+              <div
+                key={i}
+                className="border-2 border-dashed border-gray-300 rounded-md aspect-square flex items-center justify-center hover:border-amazon-blue cursor-pointer"
+              >
+                <Plus className="w-8 h-8 text-gray-400" />
+              </div>
+            ))}
         </div>
       </div>
     </div>

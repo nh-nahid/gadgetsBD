@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+
 import Header from "@/components/add-product/Header";
 import ProductIdentity from "@/components/add-product/ProductIdentity";
 import PricingInventory from "@/components/add-product/PricingInventory";
 import ProductImages from "@/components/add-product/ProductImages";
 import Specifications from "@/components/add-product/Specifications";
 import ActionButtons from "@/components/add-product/ActionButtons";
-import { uploadToImageKit } from "@/lib/uploadToImageKit";
-import { useSession } from "next-auth/react";
 
 export default function AddProductPage() {
   const router = useRouter();
-  const { data: session } = useSession(); // logged-in session
-  const shopId = session?.shop?.id;
+  const { data: session, status } = useSession();
 
+  const shopId = session?.shop?.id;
+  const isShopOwner = session?.user?.role === "SHOP_OWNER";
 
   const [form, setForm] = useState({
     title: "",
@@ -35,47 +36,49 @@ export default function AddProductPage() {
       others: "",
     },
     images: [],
-    features: [], 
+    features: [],
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // =================== Input Handlers ===================
+ 
+  useEffect(() => {
+    if (status === "loading") return; 
+    if (!session || !isShopOwner) {
+      
+      router.push("/"); 
+    }
+  }, [status, session, isShopOwner, router]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name in form.specs) {
-      setForm(prev => ({ ...prev, specs: { ...prev.specs, [name]: value } }));
+      setForm((prev) => ({ ...prev, specs: { ...prev.specs, [name]: value } }));
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // =================== Feature Handlers ===================
-  const addFeature = () => setForm(prev => ({ ...prev, features: [...prev.features, ""] }));
+  const addFeature = () => setForm((prev) => ({ ...prev, features: [...prev.features, ""] }));
   const updateFeature = (index, value) => {
     const newFeatures = [...form.features];
     newFeatures[index] = value;
-    setForm(prev => ({ ...prev, features: newFeatures }));
+    setForm((prev) => ({ ...prev, features: newFeatures }));
   };
   const removeFeature = (index) => {
     const newFeatures = [...form.features];
     newFeatures.splice(index, 1);
-    setForm(prev => ({ ...prev, features: newFeatures }));
+    setForm((prev) => ({ ...prev, features: newFeatures }));
   };
 
-
-
-  // =================== Submit ===================
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!shopId) {
       alert("Cannot find your shop. Are you logged in?");
       return;
     }
 
-    // basic validation
     const newErrors = {};
     if (!form.title) newErrors.title = "Product title is required";
     if (!form.category) newErrors.category = "Category is required";
@@ -94,8 +97,8 @@ export default function AddProductPage() {
         shop: {
           shopId,
           shopName: session?.shop?.name || session?.user?.shopName || "My Shop",
-          isOfficial: session?.shop?.isOfficial || session?.user?.isOfficial || false,
-          shopOwnerId: session?.user?.id
+          isOfficial: session?.shop?.isOfficial || false,
+          shopOwnerId: session?.user?.id,
         },
       };
 
@@ -122,18 +125,24 @@ export default function AddProductPage() {
     }
   };
 
+
+  if (status === "loading" || !isShopOwner) {
+    return <div className="flex flex-col items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amazon-blue mb-4"></div>
+        <p className="text-gray-700 text-lg font-medium">Checking access...</p>
+      </div>;
+  }
+
   return (
     <main className="max-w-[1000px] mx-auto w-full p-6">
       <Header />
 
       <form className="space-y-6" onSubmit={handleSubmit}>
-        {/* Product Details */}
         <ProductIdentity errors={errors} onChange={handleChange} value={form} />
         <PricingInventory errors={errors} onChange={handleChange} value={form} />
         <ProductImages onImagesChange={(imgs) => setForm({ ...form, images: imgs })} images={form.images} />
         <Specifications onChange={handleChange} value={form.specs} />
 
-        {/* Features */}
         <div className="bg-white border border-gray-300 rounded shadow-sm p-6">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">
             Product Features
@@ -167,7 +176,6 @@ export default function AddProductPage() {
           </button>
         </div>
 
-        {/* Submit Buttons */}
         <ActionButtons loading={loading} />
       </form>
     </main>

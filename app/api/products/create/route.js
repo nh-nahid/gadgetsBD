@@ -9,7 +9,6 @@ export const POST = async (req) => {
   try {
     const body = await req.json();
 
-    // =================== Validation ===================
     if (!body.title) {
       return NextResponse.json({ error: "Product title is required" }, { status: 400 });
     }
@@ -17,25 +16,19 @@ export const POST = async (req) => {
       return NextResponse.json({ error: "Shop ID is required" }, { status: 400 });
     }
 
-    // =================== Connect to DB ===================
     await dbConnect();
-
-    // =================== Find shop ===================
     const shop = await shopModel.findById(body.shop.shopId);
     if (!shop) {
       return NextResponse.json({ error: "Cannot find your shop" }, { status: 404 });
     }
 
-    // =================== Prepare slug ===================
     const slug = body.slug || body.title.toLowerCase().replace(/\s+/g, "-");
 
-    // =================== Ensure first image is main ===================
     const images = (body.images || []).map((img, idx) => ({
       ...img,
       isMain: idx === 0 ? true : !!img.isMain,
     }));
 
-    // =================== Create product ===================
     const newProduct = await productModel.create({
       title: body.title,
       slug,
@@ -52,7 +45,7 @@ export const POST = async (req) => {
       freeDelivery: body.freeDelivery !== undefined ? body.freeDelivery : true,
       deliveryText: body.deliveryText || "Tomorrow",
       returnPolicyDays: body.returnPolicyDays || 14,
-      features: body.features || [], // ✅ features array
+      features: body.features || [],
       specs: body.specs || {},
       images,
       shop: {
@@ -67,7 +60,6 @@ export const POST = async (req) => {
       purchaseCount: 0,
     });
 
-    // =================== Return clean product ===================
     const cleanProduct = replaceMongoIdInObject(newProduct.toObject());
 
     return NextResponse.json(

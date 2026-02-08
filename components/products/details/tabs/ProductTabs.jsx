@@ -10,7 +10,6 @@ export default function ProductTabs({ description, features, reviews, shop, prod
 
   return (
     <div className="mt-12">
-      {/* Tabs Header */}
       <div className="border-b border-gray-300 mb-6 flex gap-8">
         <button
           onClick={() => setActiveTab("description")}
@@ -45,8 +44,6 @@ export default function ProductTabs({ description, features, reviews, shop, prod
           Shop Info
         </button>
       </div>
-
-      {/* Tabs Content */}
       <div>
         {activeTab === "description" && (
           <DescriptionTab description={description} features={features} />

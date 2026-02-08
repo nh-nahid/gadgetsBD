@@ -16,8 +16,8 @@ export const POST = async (req) => {
     if (Date.now() > user.resetTokenExpire) 
       return NextResponse.json({ error: "Token expired" }, { status: 400 });
 
-    user.password = password; // plain password, pre-save will hash
-    user.isOAuth = false; // mark as non-OAuth
+    user.password = password; 
+    user.isOAuth = false; 
     user.resetToken = null;
     user.resetTokenExpire = null;
 

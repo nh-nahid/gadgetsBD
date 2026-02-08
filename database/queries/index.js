@@ -11,16 +11,11 @@ import { replaceMongoIdInArray, replaceMongoIdInObject } from "@/utils/data-util
 
 await dbConnect();
 
-/* ======================
-   Products
-====================== */
 export async function getAllProducts(options = {}) {
   const { limit, sortBy } = options;
 
-  // Only fetch published products
   let query = productModel.find({ isActive: true }).lean();
 
-  // Sorting logic
   if (sortBy) {
     switch (sortBy) {
       case "price-asc":
@@ -41,12 +36,11 @@ export async function getAllProducts(options = {}) {
     }
   }
 
-  // Limit number of products
+
   if (limit) query = query.limit(limit);
 
   const products = await query;
 
-  // Convert _id to id for consistency
   return replaceMongoIdInArray(products);
 }
 
@@ -71,9 +65,6 @@ export async function getFeaturedProducts(limit = 6) {
   return replaceMongoIdInArray(products);
 }
 
-/* ======================
-   Reviews
-====================== */
 export async function getReviewsByProductId({ productId, limit = 5, skip = 0 }) {
   if (!productId) throw new Error("productId is required");
 
@@ -92,9 +83,6 @@ export async function getReviewCount(productId) {
   return reviewModel.countDocuments({ productId, hidden: false });
 }
 
-/* ======================
-   Shops
-====================== */
 export async function getAllShops({ page = 1, limit = 6, sortBy } = {}) {
   const skip = (page - 1) * limit;
 
@@ -135,11 +123,8 @@ export async function getShopById(shopId) {
 export async function getShopByOwnerId(shopOwnerId) {
   if (!shopOwnerId) return null;
 
-  // Make sure shopOwnerId is a valid ObjectId
   const validId = mongoose.Types.ObjectId.isValid(shopOwnerId);
   if (!validId) return null;
-
-  // Query the shop by shopOwnerId
   const shop = await shopModel.findOne({ shopOwnerId }).lean();
 
   return shop ? replaceMongoIdInObject(shop) : null;
@@ -151,18 +136,13 @@ export async function getShopBySlug(slug) {
   return shop ? replaceMongoIdInObject(shop) : null;
 }
 
-/* ======================
-   Users
-====================== */
 export async function getUserByEmail(email) {
   if (!email) return null;
   const user = await userModel.findOne({ email }).lean();
   return user ? replaceMongoIdInObject(user) : null;
 }
 
-/* ======================
-   Cart
-====================== */
+
 export async function getCartsByUser(userId) {
   if (!userId) return [];
   const carts = await cartModel.find({ userId }).lean();
@@ -186,9 +166,7 @@ export async function getFullCartByUser(userId) {
   });
 }
 
-/* ======================
-   Orders
-====================== */
+
 export async function getOrderByNumber(orderNumber) {
   if (!orderNumber) return null;
 
@@ -200,10 +178,8 @@ export async function getOrderByNumber(orderNumber) {
 export async function getOrderById(orderId) {
   if (!orderId) return null;
 
-  // Find by MongoDB _id
   const order = await orderModel.findById(orderId).lean();
 
-  // Replace _id fields with id in nested objects if needed
   return order ? replaceMongoIdInObject(order) : null;
 }
 
@@ -213,9 +189,6 @@ export async function getOrdersByUser(userId) {
   return replaceMongoIdInArray(orders);
 }
 
-/* ======================
-   Most Purchased Products
-====================== */
 export async function getMostPurchasedProducts(limit = 10) {
   const client = await mongoClientPromise;
   const db = client.db();
@@ -254,21 +227,16 @@ export async function getMostPurchasedProducts(limit = 10) {
 }
 
 
-/* ======================
-   Orders for Shop Owner
-====================== */
 export async function getOrdersForShopOwner(shopOwnerId) {
  
   if (!shopOwnerId) return [];
 
-  // Fetch all orders that contain items from this shop owner
   const orders = await orderModel
     .find({ "items.shopOwnerId": shopOwnerId })
     .sort({ createdAt: -1 })
     .lean();
 
   const filteredOrders = orders.map((order) => {
-    // Filter only the items for this shop owner
     const shopItems = order.items
       .filter((item) => item.shopOwnerId.toString() === shopOwnerId.toString())
       .map((item) => ({
@@ -285,7 +253,7 @@ export async function getOrdersForShopOwner(shopOwnerId) {
       userId: order.userId.toString(),
     };
 
-    // ✅ FIX: If there is only 1 product for this shop owner, sync order status
+    
     if (shopItems.length === 1) {
       newOrder.status = shopItems[0].status;
     }
@@ -302,7 +270,6 @@ export async function getOrdersForShopOwner(shopOwnerId) {
 export async function getProductsByShop(shopOwnerId, options = {}) {
   if (!shopOwnerId) throw new Error("shopOwnerId is required");
 
-  // Convert string to ObjectId
   let ownerId;
   try {
     ownerId = new mongoose.Types.ObjectId(shopOwnerId);
@@ -317,7 +284,6 @@ export async function getProductsByShop(shopOwnerId, options = {}) {
     isActive: true,
   }).lean();
 
-  // Sorting
   if (sortBy) {
     switch (sortBy) {
       case "price-asc": query = query.sort({ price: 1 }); break;
@@ -333,7 +299,7 @@ export async function getProductsByShop(shopOwnerId, options = {}) {
 
   const products = await query;
 
-  // Convert _id and shopOwnerId to strings for frontend
+
   return products.map((p) => ({
     ...p,
     id: p._id.toString(),

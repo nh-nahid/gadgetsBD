@@ -13,7 +13,6 @@ export async function POST(req, { params }) {
       return NextResponse.json({ message: "Missing orderId or productId" }, { status: 400 });
     }
 
-    // Cancel the item ONLY if it's pending or confirmed
     const result = await orderModel.updateOne(
       {
         _id: orderId,
@@ -31,7 +30,6 @@ export async function POST(req, { params }) {
       }, { status: 400 });
     }
 
-    // Optionally, update top-level order status if all items are cancelled
     const order = await orderModel.findById(orderId).lean();
     const allCancelled = order.items.every(i => i.status === "cancelled");
     if (allCancelled) {

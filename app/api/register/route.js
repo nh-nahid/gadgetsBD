@@ -29,22 +29,22 @@ export const POST = async (req) => {
 
     await dbConnect();
 
-    // 1️⃣ Check if email exists
+
     const existingUser = await userModel.findOne({ email });
     if (existingUser)
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
 
-    // 2️⃣ Create new user
+
     const newUser = await userModel.create({
       name,
       email,
-      password, // hashed automatically
+      password, 
       role: role || "USER",
       shopName: role === "SHOP_OWNER" ? shopName : null,
       mobile,
     });
 
-    // 3️⃣ If SHOP_OWNER, create shop
+
     let shop = null;
     if (role === "SHOP_OWNER") {
       const baseSlug = slugify(shopName || name, { lower: true });
@@ -56,7 +56,7 @@ export const POST = async (req) => {
       }
 
       shop = await shopModel.create({
-        shopOwnerId: newUser._id, // matches JSON
+        shopOwnerId: newUser._id, 
         name: shopName || name,
         shopSlug,
         ownerName: name,
@@ -78,7 +78,6 @@ export const POST = async (req) => {
       });
     }
 
-    // 4️⃣ Generate tokens
     const accessToken = generateAccessToken({
       userId: newUser._id.toString(),
       role: newUser.role,
@@ -88,14 +87,14 @@ export const POST = async (req) => {
       userId: newUser._id.toString(),
     });
 
-    // 5️⃣ Save refresh token
+
     newUser.refreshToken = refreshToken;
     await newUser.save();
 
-    // 6️⃣ Clean user object
+
     const cleanUser = replaceMongoIdInObject(newUser.toObject());
 
-    // 7️⃣ Return response
+
     return NextResponse.json(
       {
         message: "User and shop created successfully",

@@ -3,7 +3,6 @@ import { CreditCard, Headphones, ShieldCheck, Truck } from "lucide-react";
 const WhyShopWithUs = () => {
     return (
        <>
-         {/* <!-- Why Shop With Us Section --> */}
       <div className="bg-white py-12 mt-8">
         <div className="max-w-[1500px] mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-8">

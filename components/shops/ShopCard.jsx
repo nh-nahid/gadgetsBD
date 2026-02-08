@@ -9,7 +9,7 @@ export default function ShopCard({ shop }) {
   const {
     name = "Unnamed Shop",
     shopSlug = "#",
-    coverImage = "https://cloudinary-marketing-res.cloudinary.com/images/w_1000,c_scale/v1699909962/fallback_image_header/fallback_image_header-png?_i=AA", 
+    coverImage = "/placeholder.png", 
     location = {},
     rating = {},
     description = "No description available.",
@@ -21,7 +21,6 @@ export default function ShopCard({ shop }) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-      {/* Cover Image */}
       <div className="h-48 overflow-hidden">
         <Image
           src={coverImage}
@@ -33,7 +32,6 @@ export default function ShopCard({ shop }) {
       </div>
 
       <div className="p-4 flex-1 flex flex-col">
-        {/* Shop Info */}
         <div className="mb-2">
           <h3 className="font-bold text-lg text-amazon-blue hover:underline">
             <Link href={`/shops/${shopSlug}`}>{name}</Link>
@@ -43,15 +41,13 @@ export default function ShopCard({ shop }) {
           </p>
         </div>
 
-        {/* Shop Rating */}
         <ShopRating average={average} count={count} />
 
-        {/* Description */}
+    
         <p className="text-sm line-clamp-3 mb-4 text-gray-700">
           {description}
         </p>
 
-        {/* Specializes & Visit Button */}
         <div className="mt-auto pt-4 border-t flex justify-between items-center">
           <span className="text-xs">
             <span className="text-gray-500">Specializes in: </span>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function RelatedProducts({ products = [] }) {
   if (!products.length) return null;
@@ -9,9 +10,7 @@ export default function RelatedProducts({ products = [] }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {products.map((product) => {
-          const href = product.slug
-            ? `/products/${product.slug}`
-            : null;
+          const href = product.slug ? `/products/${product.slug}` : null;
 
           const image =
             product.images?.find((img) => img.isMain)?.url ||
@@ -46,16 +45,16 @@ export default function RelatedProducts({ products = [] }) {
   );
 }
 
-/* ---------- Extracted for cleanliness ---------- */
-
 function ProductCardContent({ image, title, price }) {
   return (
     <>
-      <div className="bg-gray-50 h-32 flex items-center justify-center mb-2">
-        <img
-          src={image}
+      <div className="relative bg-gray-50 h-32 flex items-center justify-center mb-2 rounded overflow-hidden">
+        <Image
+          src={image || "/placeholder.png"}
           alt={title}
-          className="h-full object-cover"
+          fill
+          sizes="128px"
+          className="object-cover"
         />
       </div>
 
@@ -63,9 +62,7 @@ function ProductCardContent({ image, title, price }) {
         {title}
       </p>
 
-      <p className="text-sm font-bold">
-        ৳{price.toLocaleString()}
-      </p>
+      <p className="text-sm font-bold">৳{price.toLocaleString()}</p>
     </>
   );
 }

@@ -14,7 +14,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
   session: { strategy: "jwt" },
 
   providers: [
-    // ================= Credentials =================
+   
     CredentialsProvider({
       name: "Credentials",
       credentials: { email: {}, password: {} },
@@ -31,7 +31,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
       },
     }),
 
-    // ================= Google OAuth =================
+    
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -44,17 +44,17 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
   },
 
   callbacks: {
-    // ================= SignIn Callback =================
+ 
     async signIn({ user, account, profile }) {
       if (account.provider === "google") {
         const dbClient = await mongoClientPromise;
         const db = dbClient.db();
 
-        // Check if user exists
+       
         let existingUser = await userModel.findOne({ email: profile.email });
 
         if (!existingUser) {
-          // Create new user
+        
           existingUser = await userModel.create({
             name: profile.name,
             email: profile.email,
@@ -68,7 +68,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
           });
         }
 
-        // Explicitly link Google account in "accounts" collection
+     
         await db.collection("accounts").updateOne(
           { userId: existingUser._id.toString(), provider: "google" },
           {
@@ -84,7 +84,6 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
           { upsert: true }
         );
 
-        // Mutate the NextAuth user object
         user.id = existingUser._id.toString();
         user.name = existingUser.name;
         user.email = existingUser.email;
@@ -94,7 +93,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
       return true;
     },
 
-    // ================= JWT Callback =================
+
     async jwt({ token, user, account }) {
       if (user) {
         const userId = user._id?.toString() || user.id;
@@ -103,7 +102,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         token.accessToken = generateAccessToken({ userId });
         token.accessTokenExpires = Date.now() + 30 * 60 * 1000;
 
-        // Attach shop immediately for session
+   
         try {
           const { getShopByOwnerId } = await import("@/database/queries");
           const shop = await getShopByOwnerId(userId);
@@ -117,7 +116,6 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
       return token;
     },
 
-    // ================= Session Callback =================
     async session({ session, token }) {
       session.user = token.user;
       session.accessToken = token.accessToken;
@@ -126,6 +124,6 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
     },
   },
 
-  // Allow linking credentials + OAuth accounts
+
   experimental: { allowDangerousEmailAccountLinking: true },
 });

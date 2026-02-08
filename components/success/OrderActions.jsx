@@ -10,7 +10,6 @@ export default function OrderActions({ orderId }) {
     }
 
     try {
-      // Open invoice PDF in a new tab
       window.open(`/api/orders/${orderId}/invoice`, "_blank");
     } catch (err) {
       console.error("Failed to download invoice:", err);

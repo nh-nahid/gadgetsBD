@@ -78,7 +78,7 @@ const OrderReviewCard = ({ productId, onReviewSubmitted, setShowReviewForm }) =>
       onSubmit={handleSubmit}
       className="mt-2 p-4 border rounded-md bg-gray-50 w-full max-w-md flex flex-col gap-2 text-xs"
     >
-      {/* Rating */}
+     
       <div className="flex items-center gap-2">
         <span className="w-16">Rating:</span>
         <StarRating
@@ -88,7 +88,6 @@ const OrderReviewCard = ({ productId, onReviewSubmitted, setShowReviewForm }) =>
         />
       </div>
 
-      {/* Title */}
       <input
         type="text"
         value={review.title}
@@ -97,7 +96,6 @@ const OrderReviewCard = ({ productId, onReviewSubmitted, setShowReviewForm }) =>
         className="border px-2 py-1 rounded text-xs w-full"
       />
 
-      {/* Comment */}
       <textarea
         value={review.comment}
         onChange={(e) => setReview((prev) => ({ ...prev, comment: e.target.value }))}
@@ -106,7 +104,6 @@ const OrderReviewCard = ({ productId, onReviewSubmitted, setShowReviewForm }) =>
         rows={2}
       />
 
-      {/* Buttons */}
       <div className="flex gap-2 mt-1">
         <button
           type="submit"

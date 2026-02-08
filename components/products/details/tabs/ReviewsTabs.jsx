@@ -18,7 +18,6 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
   const [editReview, setEditReview] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
 
-  // ✅ Check if user can review via backend (purchased & not reviewed)
   useEffect(() => {
     const checkCanReview = async () => {
       if (!userId || !productId) return;
@@ -36,7 +35,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
     checkCanReview();
   }, [userId, productId]);
 
-  // Fetch reviews whenever tab changes or productId changes
+ 
   useEffect(() => {
     const fetchReviews = async () => {
       setLoading(true);
@@ -81,7 +80,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
       setReviews((prev) => prev.filter((r) => r.id !== reviewId));
       setEditReview(null);
       setShowForm(false);
-      setCanReview(true); // user can write again
+      setCanReview(true); 
     } catch (err) {
       console.error("Failed to delete review:", err);
     }
@@ -100,7 +99,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
       setEditReview(null);
     } else {
       setReviews((prev) => [updatedReview, ...prev]);
-      setCanReview(false); // user already wrote a review
+      setCanReview(false); 
     }
     setShowForm(false);
   };
@@ -110,7 +109,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : 0;
 
-  // Filter reviews for current tab and show user's review on top
+
   const filteredReviews = reviews
     .filter((review) => {
       if (activeTab === "all") return true;
@@ -154,7 +153,7 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
         />
       )}
 
-      {/* Tabs */}
+
       <div className="flex gap-4 mb-6 border-b border-gray-300">
         {[
           { key: "all", label: "All Reviews" },
@@ -176,7 +175,6 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
         ))}
       </div>
 
-      {/* Reviews List */}
       <div className="space-y-6">
         {filteredReviews.length === 0 && <p>No reviews yet.</p>}
         {filteredReviews.map((review) => (
@@ -194,7 +192,6 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
                 )}
               </div>
 
-              {/* Edit/Delete buttons */}
               {review.userId === userId && (
                 <div className="flex gap-2">
                   <button
@@ -233,7 +230,6 @@ export default function ReviewsTab({ reviews: initialReviews, productId }) {
         </button>
       )}
 
-      {/* Average Rating */}
       <div className="mt-4">
         <p className="text-sm font-medium">
           Average Rating: {averageRating.toFixed(1)} / 5

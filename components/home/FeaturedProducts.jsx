@@ -5,7 +5,6 @@ import { getMostPurchasedProducts } from "@/database/queries";
 const MAX_VISIBLE = 5;
 
 const FeaturedProducts = async () => {
-  // Fetch top-selling products from orders
   const products = await getMostPurchasedProducts(6);
 
   if (!products || products.length === 0) return null;
@@ -15,11 +14,9 @@ const FeaturedProducts = async () => {
 
   return (
     <div className="mt-8 bg-white p-6 shadow-sm">
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Featured Products</h2>
 
-        {/* View All link */}
         {hasMore && (
           <Link
             href="/products"
@@ -30,11 +27,10 @@ const FeaturedProducts = async () => {
         )}
       </div>
 
-      {/* Products */}
       <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide">
         {visibleProducts.map((product) => (
           <FeaturedProductCard
-            key={product.id} // already replaced by replaceMongoIdInObject
+            key={product.id}
             product={product}
           />
         ))}

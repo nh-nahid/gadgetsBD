@@ -5,9 +5,7 @@ import { getOrderById } from "@/database/queries";
 export default async function SuccessPage({ params }) {
   const { orderId } = params;
 
-  // Fetch the order from MongoDB
   const order = await getOrderById(orderId);
-
 
   if (!order) {
     return (
@@ -18,6 +16,5 @@ export default async function SuccessPage({ params }) {
     );
   }
 
-  // Render the success component with fetched order
   return <OrderSuccessPage order={order} />;
 }

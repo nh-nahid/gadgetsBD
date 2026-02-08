@@ -29,7 +29,6 @@ export default function ProductForm({ product = null, onClose, onSaved, fetchPro
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // Prefill form if editing
   useEffect(() => {
     if (product) {
       setForm({
@@ -74,7 +73,6 @@ export default function ProductForm({ product = null, onClose, onSaved, fetchPro
     e.preventDefault();
     if (!userId) return alert("You must be logged in");
 
-    // ---------------- Validation ----------------
     const newErrors = {};
     if (!form.title) newErrors.title = "Title is required";
     if (!form.category) newErrors.category = "Category is required";
@@ -90,8 +88,8 @@ export default function ProductForm({ product = null, onClose, onSaved, fetchPro
       const endpoint = product ? "/api/products/update" : "/api/products/create";
       
       const payload = product
-        ? { productId: product.id, userId, ...form } // EDIT: send userId + all fields
-        : { ...form, shop: { shopOwnerId: userId } }; // CREATE: send shopOwnerId
+        ? { productId: product.id, userId, ...form } 
+        : { ...form, shop: { shopOwnerId: userId } }; 
 
       const res = await fetch(endpoint, {
         method: "POST",

@@ -15,12 +15,12 @@ export default function EditOrderModal({
   const [address, setAddress] = useState(shippingAddress);
   const [saving, setSaving] = useState(false);
 
-  // Local modal state
+
   const [localCartItems, setLocalCartItems] = useState(cartItems);
   const [localBuyNow, setLocalBuyNow] = useState(buyNowProduct);
   const [removedItems, setRemovedItems] = useState([]);
 
-  // Sync local state with parent updates
+
   useEffect(() => setLocalCartItems(cartItems), [cartItems]);
   useEffect(() => setLocalBuyNow(buyNowProduct), [buyNowProduct]);
   useEffect(() => setAddress(shippingAddress), [shippingAddress]);
@@ -58,7 +58,7 @@ export default function EditOrderModal({
   const handleSaveChanges = async () => {
     setSaving(true);
     try {
-      // 1️⃣ Save address
+      
       if (address) {
         const res = await fetch(`/api/users/${userEmail}/address`, {
           method: "PUT",
@@ -70,7 +70,7 @@ export default function EditOrderModal({
         onAddressChange(saved);
       }
 
-      // 2️⃣ Delete removed items from DB
+     
       for (const productId of removedItems) {
         await fetch("/api/cart", {
           method: "DELETE",
@@ -79,7 +79,7 @@ export default function EditOrderModal({
         });
       }
 
-      // 3️⃣ Save Buy Now product
+    
       if (localBuyNow) {
         await fetch("/api/cart", {
           method: "POST",
@@ -98,7 +98,7 @@ export default function EditOrderModal({
         });
       }
 
-      // 4️⃣ Save remaining cart items
+     
       for (const item of localCartItems) {
         await fetch("/api/cart", {
           method: "POST",
@@ -173,7 +173,7 @@ export default function EditOrderModal({
           ))}
         </div>
 
-        {/* ADDRESS */}
+        
         {address && (
           <div className="mt-4 space-y-2">
             {["name", "street", "city", "postalCode", "country", "phone"].map(field => (
@@ -188,7 +188,7 @@ export default function EditOrderModal({
           </div>
         )}
 
-        {/* ACTIONS */}
+        
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}

@@ -5,7 +5,6 @@ export default function ShopInfo({ shop }) {
   return (
     <div className="bg-white rounded-sm shadow-sm overflow-hidden mb-6 p-4 flex flex-col md:flex-row gap-4">
       
-      {/* Shop Image */}
       <div className="flex-shrink-0 w-40 h-40 relative rounded-sm overflow-hidden">
         <Image
           src={
@@ -18,7 +17,6 @@ export default function ShopInfo({ shop }) {
         />
       </div>
 
-      {/* Shop Info */}
       <div className="flex-1 flex flex-col justify-between gap-2">
         <h2 className="text-xl font-bold text-amazon-blue">{shop.name}</h2>
         

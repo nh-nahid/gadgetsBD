@@ -1,5 +1,3 @@
-// utils/data-util.js
-
 export const replaceMongoIdInArray = (array) => {
   return array.map(item => {
     const id = item._id ? item._id.toString() : undefined;

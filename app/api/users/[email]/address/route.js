@@ -17,7 +17,6 @@ export const PUT = async (request, { params }) => {
   const user = await userModel.findOne({ email });
   if (!user) return new NextResponse("User not found", { status: 404 });
 
-  // Update the default address (or replace first address)
   user.addresses[0] = updatedAddress;
 
   await user.save();

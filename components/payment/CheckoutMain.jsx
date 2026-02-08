@@ -12,14 +12,13 @@ export default function CheckoutMain({
   userId,
   onAddressChange,
 }) {
-  // ---------------- PAYMENT DETAILS ----------------
+
   const [cardName, setCardName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cvv, setCvv] = useState("");
   const [expMonth, setExpMonth] = useState("");
   const [expYear, setExpYear] = useState("");
 
-  // ---------------- PRODUCTS TO SHOW ----------------
   const productsToShow = buyNowProduct
     ? [buyNowProduct, ...cartItems.filter(item => item.productId !== buyNowProduct.productId)]
     : cartItems;
@@ -29,7 +28,7 @@ export default function CheckoutMain({
 
   return (
     <main className="checkout-container flex-1 py-10 px-4 flex flex-col lg:flex-row gap-8">
-      {/* LEFT: Checkout Steps */}
+      
       <div className="flex-1 space-y-6">
         <CheckoutSteps
           cartItems={productsToShow}
@@ -53,7 +52,6 @@ export default function CheckoutMain({
         />
       </div>
 
-      {/* RIGHT: Order Summary */}
       <div className="lg:w-[300px]">
         <OrderSummary
           cartItems={cartItems}

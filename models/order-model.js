@@ -82,7 +82,7 @@ const OrderSchema = new mongoose.Schema(
       unique: true,
     },
 
-    // overall order status (derived / helper)
+   
     status: {
       type: String,
       enum: [

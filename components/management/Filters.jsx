@@ -15,7 +15,6 @@ export default function Filters({ onFilter }) {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Debounce filters
   useEffect(() => {
     const timeout = setTimeout(() => onFilter?.(filters), 300);
     return () => clearTimeout(timeout);
@@ -24,7 +23,6 @@ export default function Filters({ onFilter }) {
   return (
     <div className="bg-white border border-gray-300 rounded shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4 text-sm">
       
-      {/* Status */}
       <div className="flex items-center gap-2">
         <span className="font-bold">Status:</span>
         <select
@@ -34,13 +32,12 @@ export default function Filters({ onFilter }) {
           className="border border-gray-300 py-1 px-2 rounded outline-none focus:ring-1 focus:ring-amazon-blue"
         >
           <option value="">All</option>
-          <option value="In Stock">In Stock</option>   {/* >5 stock */}
-          <option value="Low Stock">Low Stock</option> {/* 1–5 stock */}
-          <option value="Out of Stock">Out of Stock</option> {/* 0 stock */}
+          <option value="In Stock">In Stock</option>   
+          <option value="Low Stock">Low Stock</option> 
+          <option value="Out of Stock">Out of Stock</option> 
         </select>
       </div>
 
-      {/* Category */}
       <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
         <span className="font-bold">Category:</span>
         <select
@@ -57,7 +54,6 @@ export default function Filters({ onFilter }) {
         </select>
       </div>
 
-      {/* Brand */}
       <div className="flex items-center gap-2 border-l border-gray-300 pl-4">
         <span className="font-bold">Brand:</span>
         <select
@@ -74,7 +70,6 @@ export default function Filters({ onFilter }) {
         </select>
       </div>
 
-      {/* Search */}
       <div className="flex-1 flex items-center gap-2 border-l border-gray-300 pl-4">
         <input
           type="text"

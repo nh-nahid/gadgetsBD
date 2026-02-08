@@ -3,7 +3,8 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import Footer from "@/components/Footer";
 import { CartProvider } from "./context/CartContext";
-import { ShopProvider } from "./context/ShopContext"; // ✅ Import ShopProvider
+import { ShopProvider } from "./context/ShopContext"; 
+
 
 export const metadata = {
   title: "GadgetsBD",

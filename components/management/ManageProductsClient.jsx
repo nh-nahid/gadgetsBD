@@ -6,14 +6,16 @@ import InventoryTable from "@/components/management/InventoryTable";
 import Pagination from "@/components/management/Pagination";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import ProductForm from "@/components/management/ProductForm";
 
-
 export default function ManageProductsClient() {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const added = searchParams.get("added");
+
+  const isShopOwner = session?.user?.role === "SHOP_OWNER";
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,9 +32,15 @@ export default function ManageProductsClient() {
 
   const [editingProduct, setEditingProduct] = useState(null);
 
-  
+  useEffect(() => {
+    if (status === "loading") return; 
+    if (!session || !isShopOwner) {
+      router.push("/"); 
+    }
+  }, [status, session, isShopOwner, router]);
+
   const fetchProducts = async (filters, page) => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || !isShopOwner) return;
     setLoading(true);
 
     const params = new URLSearchParams({
@@ -53,25 +61,33 @@ export default function ManageProductsClient() {
     setLoading(false);
   };
 
-  const { status, category, brand, search } = filters;
+  const { status: filterStatus, category, brand, search } = filters;
 
   useEffect(() => {
-    fetchProducts(filters, page);
-  }, [status, category, brand, search, page, session?.user?.id]);
+    if (session?.user?.id && isShopOwner) {
+      fetchProducts(filters, page);
+    }
+  }, [filterStatus, category, brand, search, page, session?.user?.id, isShopOwner]);
 
   useEffect(() => {
-    if (added === "1") {
+    if (added === "1" && session?.user?.id && isShopOwner) {
       fetchProducts(filters, page);
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete("added");
       window.history.replaceState({}, "", newUrl.toString());
     }
-  }, [added]);
+  }, [added, session?.user?.id, isShopOwner]);
+
+  if (status === "loading" || !isShopOwner) {
+    return <div className="flex flex-col items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amazon-blue mb-4"></div>
+        <p className="text-gray-700 text-lg font-medium">Checking access...</p>
+      </div>;
+  }
 
   return (
     <main className="w-full p-6">
       <div className="max-w-[1500px] mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-normal">Manage Inventory</h1>
           <Link
@@ -82,7 +98,6 @@ export default function ManageProductsClient() {
           </Link>
         </div>
 
-        {/* Filters */}
         <Filters
           onFilter={(f) => {
             setFilters(f);
@@ -90,7 +105,6 @@ export default function ManageProductsClient() {
           }}
         />
 
-        {/* Inline Edit Form */}
         {editingProduct && (
           <ProductForm
             product={editingProduct}
@@ -100,12 +114,11 @@ export default function ManageProductsClient() {
           />
         )}
 
-        {/* Table or Loading / Empty */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amazon-blue mb-4"></div>
-        <p className="text-gray-700 text-lg font-medium">Loading details...</p>
-      </div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amazon-blue mb-4"></div>
+            <p className="text-gray-700 text-lg font-medium">Loading details...</p>
+          </div>
         ) : total === 0 ? (
           <div className="text-center py-10 text-gray-500">No products found.</div>
         ) : (

@@ -1,4 +1,3 @@
-// /api/imagekit-auth/route.js
 import ImageKit from "imagekit";
 import { NextResponse } from "next/server";
 

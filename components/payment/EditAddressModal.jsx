@@ -7,7 +7,7 @@ export default function EditAddressModal({
   onClose,
   onAddressChange,
 }) {
-  // Default to empty fields if shippingAddress is null
+
   const initialAddress = shippingAddress || {
     name: "",
     street: "",
@@ -70,7 +70,6 @@ export default function EditAddressModal({
       role="dialog"
       aria-modal="true"
     >
-      {/* Wrap inputs in a form with autoComplete="off" */}
       <form autoComplete="off" className="bg-white rounded-md w-11/12 max-w-md p-6 relative">
         <h2 className="text-xl font-bold mb-4">Edit Shipping Address</h2>
         <div className="space-y-2">

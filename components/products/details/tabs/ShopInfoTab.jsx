@@ -9,7 +9,7 @@ export default function ShopInfoTab({ shop }) {
       <h2 className="text-xl font-bold mb-4">Shop Information</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left: Shop Details */}
+       
         <div>
           <h3 className="font-bold mb-2">{shop.name}</h3>
           <p className="text-sm text-gray-600 mb-4">{shop.description}</p>
@@ -29,7 +29,6 @@ export default function ShopInfoTab({ shop }) {
           </div>
         </div>
 
-        {/* Right: Policies */}
         <div>
           <h3 className="font-bold mb-2">Policies</h3>
           <div className="space-y-2 text-sm">
@@ -41,7 +40,6 @@ export default function ShopInfoTab({ shop }) {
             ))}
           </div>
 
-          {/* Visit Shop Page */}
           {shop.link && typeof shop.link === "string" && (
             <Link
               href={shop.link}

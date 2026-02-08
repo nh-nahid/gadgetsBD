@@ -15,7 +15,7 @@ export const POST = async (req) => {
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenExpire = Date.now() + 1000 * 60 * 15; // 15 mins
+    const resetTokenExpire = Date.now() + 1000 * 60 * 15; 
 
     user.resetToken = resetToken;
     user.resetTokenExpire = resetTokenExpire;

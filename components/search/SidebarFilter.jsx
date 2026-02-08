@@ -8,9 +8,6 @@ export default function SidebarFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // --------------------------
-  // Filter options
-  // --------------------------
   const categories = [
     "Laptops & Computers",
     "Smartphones & Tablets",
@@ -41,9 +38,6 @@ export default function SidebarFilter() {
   const availability = ["In Stock", "Pre-Order"];
   const reviews = ["★★★★☆ & Up", "★★★☆☆ & Up"];
 
-  // --------------------------
-  // Selected state
-  // --------------------------
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedPrices, setSelectedPrices] = useState([]);
@@ -51,9 +45,7 @@ export default function SidebarFilter() {
   const [selectedAvailability, setSelectedAvailability] = useState([]);
   const [selectedReviews, setSelectedReviews] = useState([]);
 
-  // --------------------------
-  // Sync state with URL
-  // --------------------------
+
   useEffect(() => {
     const getSelected = (key) =>
       searchParams.getAll(key).filter((v) => v.toLowerCase() !== "all");
@@ -66,9 +58,6 @@ export default function SidebarFilter() {
     setSelectedReviews(getSelected("review"));
   }, [searchParams?.toString()]);
 
-  // --------------------------
-  // Toggle handler
-  // --------------------------
   const handleToggle = (stateArray, setState, key, value) => {
     let newSelected;
     if (stateArray.includes(value)) {
@@ -78,7 +67,6 @@ export default function SidebarFilter() {
     }
     setState(newSelected);
 
-    // Update URL
     const params = new URLSearchParams(searchParams.toString());
     params.delete(key);
     newSelected.forEach((v) => params.append(key, v));
@@ -87,9 +75,7 @@ export default function SidebarFilter() {
 
   const isSelected = (stateArray, value) => stateArray.includes(value);
 
-  // --------------------------
-  // Generic checkbox renderer
-  // --------------------------
+
   const renderCheckboxList = (items, stateArray, setState, key, mapFn) =>
     items.map((item, idx) => {
       const value = mapFn ? mapFn(item) : slugify(item);
@@ -109,9 +95,6 @@ export default function SidebarFilter() {
       );
     });
 
-  // --------------------------
-  // Price slug helper
-  // --------------------------
   const priceSlug = (price) => {
     switch (price) {
       case "Under ৳10,000":
@@ -129,14 +112,9 @@ export default function SidebarFilter() {
     }
   };
 
-  // --------------------------
-  // Category mapping for URL
-  // --------------------------
   const categorySlug = (category) => slugify(categoryMap[category] || category);
 
-  // --------------------------
-  // Review slug mapping
-  // --------------------------
+
   const reviewSlug = (reviewText) => {
     if (reviewText.startsWith("★★★★")) return "4-star-up";
     if (reviewText.startsWith("★★★")) return "3-star-up";
@@ -145,7 +123,7 @@ export default function SidebarFilter() {
 
   return (
     <div className="w-64 hidden lg:block flex-shrink-0 border-r pr-4 space-y-6">
-      {/* Category */}
+    
       <div>
         <h3 className="font-bold text-base mb-3">Category</h3>
         <div className="space-y-2">
@@ -159,7 +137,6 @@ export default function SidebarFilter() {
         </div>
       </div>
 
-      {/* Brand */}
       <div className="border-t pt-4">
         <h3 className="font-bold text-base mb-3">Brand</h3>
         <div className="space-y-2">
@@ -167,7 +144,6 @@ export default function SidebarFilter() {
         </div>
       </div>
 
-      {/* Customer Reviews */}
       <div className="border-t pt-4">
         <h3 className="font-bold text-base mb-3">Customer Reviews</h3>
         <div className="space-y-2">
@@ -181,7 +157,7 @@ export default function SidebarFilter() {
         </div>
       </div>
 
-      {/* Price */}
+    
       <div className="border-t pt-4">
         <h3 className="font-bold text-base mb-3">Price</h3>
         <div className="space-y-2">
@@ -189,7 +165,6 @@ export default function SidebarFilter() {
         </div>
       </div>
 
-      {/* Availability */}
       <div className="border-t pt-4">
         <h3 className="font-bold text-base mb-3">Availability</h3>
         <div className="space-y-2">
@@ -202,7 +177,6 @@ export default function SidebarFilter() {
         </div>
       </div>
 
-      {/* Condition */}
       <div className="border-t pt-4">
         <h3 className="font-bold text-base mb-3">Condition</h3>
         <div className="space-y-2">

@@ -16,13 +16,13 @@ export default function OrderSummary({
   expYear,
 }) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false); // <-- Loading state
+  const [isLoading, setIsLoading] = useState(false); 
 
   const productsToShow = buyNowProduct
     ? [buyNowProduct, ...cartItems.filter(item => item.productId !== buyNowProduct.productId)]
     : cartItems;
 
-  // Totals
+  
   let subtotal = 0;
   let totalItems = 0;
   productsToShow.forEach(item => {
@@ -60,7 +60,7 @@ items.forEach(item => {
 });
 
     try {
-      setIsLoading(true); // <-- Start loading
+      setIsLoading(true); 
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,7 +82,7 @@ items.forEach(item => {
       console.error("Order placement error:", err);
       alert(err.message || "Something went wrong.");
     } finally {
-      setIsLoading(false); // <-- Stop loading
+      setIsLoading(false); 
     }
   };
 
@@ -93,11 +93,11 @@ items.forEach(item => {
       <div className="box p-4 sticky top-10">
         <button
           onClick={handlePlaceOrder}
-          disabled={isLoading} // <-- Disable button while loading
+          disabled={isLoading} 
           className={`w-full py-2 mb-4 rounded-md btn-primary text-sm font-normal shadow-sm ${isLoading ? "opacity-60 cursor-not-allowed" : ""
             }`}
         >
-          {isLoading ? "Placing your order..." : "Place your order"} {/* <-- Show loading text */}
+          {isLoading ? "Placing your order..." : "Place your order"} 
         </button>
 
         <h3 className="font-bold text-lg mb-4">Order Summary</h3>

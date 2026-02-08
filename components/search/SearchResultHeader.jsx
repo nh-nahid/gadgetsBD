@@ -9,7 +9,6 @@ export default function SearchResultsHeader({
 }) {
   return (
     <div className="flex justify-between items-center mb-4 shadow-sm border-b pb-2">
-      {/* Results Info */}
       <div className="text-sm">
         <span>
           {showingFrom}-{showingTo} of {totalResults} results for{" "}

@@ -8,37 +8,70 @@ import { signIn } from "next-auth/react";
 export default function RegisterForm() {
   const [role, setRole] = useState("USER");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const router = useRouter();
 
   const isOwner = role === "SHOP_OWNER";
+
+  const validateForm = (form) => {
+    const newErrors = {};
+
+    if (!form.name.value.trim()) {
+      newErrors.name = "Name is required";
+    }
+
+    if (!form.email.value) {
+      newErrors.email = "Email is required";
+    } else if (!/^\S+@\S+\.\S+$/.test(form.email.value)) {
+      newErrors.email = "Enter a valid email address";
+    }
+
+    if (!form.mobile.value) {
+      newErrors.mobile = "Mobile number is required";
+    }
+
+    if (isOwner && !form.shopName.value.trim()) {
+      newErrors.shopName = "Shop name is required";
+    }
+
+    if (!form.password.value) {
+      newErrors.password = "Password is required";
+    } else if (form.password.value.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (form.password.value !== form.passwordConfirm.value) {
+      newErrors.passwordConfirm = "Passwords do not match";
+    }
+
+    return newErrors;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     const form = e.target;
-    const password = form.password.value;
-    const passwordConfirm = form.passwordConfirm.value;
+    setErrors({});
 
-    if (password !== passwordConfirm) {
-      alert("Passwords do not match");
-      return;
-    }
-    if (password.length < 6) {
-      alert("Password must be at least 6 characters");
+    const validationErrors = validateForm(form);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
     const data = {
       name: form.name.value,
       email: form.email.value,
-      password,
+      password: form.password.value,
       role,
       shopName: isOwner ? form.shopName.value : null,
       mobile: form.mobile.value,
     };
 
     setLoading(true);
+
     try {
       const res = await fetch("/api/register", {
         method: "POST",
@@ -50,11 +83,11 @@ export default function RegisterForm() {
       setLoading(false);
 
       if (!res.ok) {
-        alert(result.error || "Something went wrong");
+        setErrors({ api: result.error || "Something went wrong" });
         return;
       }
 
-      // ================= SHOP_OWNER auto-login =================
+  
       if (isOwner) {
         const login = await signIn("credentials", {
           redirect: false,
@@ -63,7 +96,7 @@ export default function RegisterForm() {
         });
 
         if (login?.error) {
-          alert("Auto-login failed");
+          setErrors({ api: "Auto-login failed" });
           return;
         }
 
@@ -71,23 +104,32 @@ export default function RegisterForm() {
         return;
       }
 
-      // ================= USER -> normal token storage =================
       localStorage.setItem("accessToken", result.accessToken);
       localStorage.setItem("refreshToken", result.refreshToken);
       router.replace("/profile");
     } catch (err) {
       setLoading(false);
-      alert(err.message || "Server error");
+      setErrors({ api: "Server error. Please try again." });
     }
   };
+
+  const inputClass = (field) =>
+    `w-full px-2 py-1.5 border rounded-sm outline-none ${
+      errors[field]
+        ? "border-red-500"
+        : "border-gray-400 focus:border-amazon-secondary"
+    }`;
 
   return (
     <div className="bg-white text-amazon-text flex flex-col min-h-screen items-center pt-8">
       <Logo />
+
       <div className="w-full max-w-[400px] p-6 a-box mb-6">
         <h1 className="text-2xl font-normal mb-4">Create account</h1>
 
-        {/* Role selection */}
+        {errors.api && (
+          <p className="text-red-500 text-sm mb-3">{errors.api}</p>
+        )}
         <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-sm">
           <button
             type="button"
@@ -109,121 +151,87 @@ export default function RegisterForm() {
           </button>
         </div>
 
-        {/* Form */}
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="name" className="block text-sm font-bold mb-1">
-              Your name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              required
-              placeholder="First and last name"
-              className="w-full px-2 py-1.5 border border-gray-400 rounded-sm"
-            />
+            <label className="block text-sm font-bold mb-1">Your name</label>
+            <input name="name" className={inputClass("name")} />
+            {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
           </div>
 
           {isOwner && (
             <div>
-              <label htmlFor="shopName" className="block text-sm font-bold mb-1">
-                Shop name
-              </label>
-              <input
-                id="shopName"
-                name="shopName"
-                type="text"
-                required
-                placeholder="Your shop name"
-                className="w-full px-2 py-1.5 border border-gray-400 rounded-sm"
-              />
+              <label className="block text-sm font-bold mb-1">Shop name</label>
+              <input name="shopName" className={inputClass("shopName")} />
+              {errors.shopName && (
+                <p className="text-xs text-red-500">{errors.shopName}</p>
+              )}
             </div>
           )}
 
           <div>
-            <label htmlFor="mobile" className="block text-sm font-bold mb-1">
-              Mobile number
-            </label>
-            <div className="flex gap-2">
-              <select className="px-2 py-1.5 border border-gray-400 rounded-sm">
-                <option>BD +880</option>
-              </select>
-              <input
-                id="mobile"
-                name="mobile"
-                type="tel"
-                required
-                placeholder="Mobile number"
-                className="flex-1 px-2 py-1.5 border border-gray-400 rounded-sm"
-              />
-            </div>
+            <label className="block text-sm font-bold mb-1">Mobile number</label>
+            <input name="mobile" className={inputClass("mobile")} />
+            {errors.mobile && (
+              <p className="text-xs text-red-500">{errors.mobile}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-bold mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              className="w-full px-2 py-1.5 border border-gray-400 rounded-sm"
-            />
+            <label className="block text-sm font-bold mb-1">Email</label>
+            <input name="email" className={inputClass("email")} />
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-bold mb-1">
-              Password
-            </label>
+            <label className="block text-sm font-bold mb-1">Password</label>
             <input
-              id="password"
-              name="password"
               type="password"
-              required
-              placeholder="At least 6 characters"
-              className="w-full px-2 py-1.5 border border-gray-400 rounded-sm"
+              name="password"
+              className={inputClass("password")}
             />
-            <p className="text-xs text-gray-600 mt-1">
-              Passwords must be at least 6 characters.
-            </p>
+            {errors.password && (
+              <p className="text-xs text-red-500">{errors.password}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="passwordConfirm" className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1">
               Re-enter password
             </label>
             <input
-              id="passwordConfirm"
-              name="passwordConfirm"
               type="password"
-              required
-              className="w-full px-2 py-1.5 border border-gray-400 rounded-sm"
+              name="passwordConfirm"
+              className={inputClass("passwordConfirm")}
             />
+            {errors.passwordConfirm && (
+              <p className="text-xs text-red-500">
+                {errors.passwordConfirm}
+              </p>
+            )}
           </div>
 
           <button
             type="submit"
             disabled={loading}
             className={`w-full py-1.5 a-button-primary text-sm font-medium rounded-sm ${
-              loading ? "opacity-50 cursor-not-allowed" : ""
+              loading ? "opacity-60 cursor-not-allowed" : ""
             }`}
           >
             {loading ? "Creating account..." : "Create your Gadgets BD account"}
           </button>
         </form>
 
-        {/* Google Sign Up for normal users */}
         {role === "USER" && (
           <div className="mt-4 flex justify-center gap-2 items-center text-sm">
             <span>or continue with</span>
             <button
               type="button"
-              className="flex items-center gap-2 p-2 border rounded"
               onClick={() => (window.location.href = "/api/auth/signin/google")}
+              className="flex items-center gap-2 p-2 border rounded"
             >
-              <Image src="/google-icon.png" alt="Google" width={16} height={16} className="w-4 h-4" />
+              <Image src="/google-icon.png" alt="Google" width={16} height={16} />
               Google
             </button>
           </div>

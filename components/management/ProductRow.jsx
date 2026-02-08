@@ -12,7 +12,6 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
     red: "bg-red-100 text-red-700",
   };
 
-  // Stock status logic
   const getStockStatus = (stock) => {
     if (stock === 0) return { text: "Out of Stock", color: "red" };
     if (stock > 0 && stock <= 5) return { text: "Low Stock", color: "yellow" };
@@ -20,7 +19,6 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
   };
   const stockStatus = getStockStatus(product.stock);
 
-  // Delete product
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
@@ -36,7 +34,6 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
     fetchProducts();
   };
 
-  // Toggle publish/unpublish
   const handleToggleStatus = async () => {
     if (!userId) return alert("Unauthorized");
 
@@ -50,7 +47,7 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
     if (!res.ok) return alert(data.error || "Failed to update status");
 
     alert(data.isActive ? "Product published ✅" : "Product unpublished ✅");
-    fetchProducts(); // refresh table
+    fetchProducts(); 
   };
 
   return (
@@ -59,7 +56,6 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
         <input type="checkbox" />
       </td>
 
-      {/* Stock Status */}
       <td className="p-3">
         <span
           className={`inline-block px-2 py-1 text-xs font-bold rounded ${
@@ -70,7 +66,6 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
         </span>
       </td>
 
-      {/* Product Image */}
       <td className="p-3">
         <Image
           src={product.image || "/placeholder.png"}
@@ -81,20 +76,15 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
         />
       </td>
 
-      {/* Title & SKU */}
       <td className="p-3">
         <div className="font-medium">{product.title}</div>
         <div className="text-xs text-gray-500">SKU: {product.sku}</div>
       </td>
 
-      {/* Category & Brand */}
       <td className="p-3 text-gray-600">{product.category}</td>
       <td className="p-3 text-gray-600">{product.brand}</td>
-
-      {/* Price */}
       <td className="p-3 font-bold">{product.price}</td>
 
-      {/* Stock Quantity */}
       <td className="p-3">
         <span
           className={`font-bold ${
@@ -109,10 +99,10 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
         </span>
       </td>
 
-      {/* Actions */}
+      
       <td className="p-3">
         <div className="flex items-center justify-end gap-2">
-          {/* Inline Edit */}
+          
           <button
             className="p-1.5 hover:bg-gray-100 rounded"
             onClick={() => onEdit(product)}
@@ -120,7 +110,7 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
             <Pencil className="w-4 h-4 text-amazon-blue" />
           </button>
 
-          {/* Publish / Unpublish */}
+          
           <button
             className="p-1.5 hover:bg-gray-100 rounded"
             onClick={handleToggleStatus}
@@ -132,7 +122,6 @@ export default function ProductRow({ product, fetchProducts, onEdit }) {
             )}
           </button>
 
-          {/* Delete */}
           <button
             className="p-1.5 hover:bg-gray-100 rounded"
             onClick={handleDelete}

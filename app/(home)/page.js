@@ -17,10 +17,10 @@ export default async function Home() {
       <HeroBanner />
 
       <div className="relative z-10 -mt-32 px-4">
-        {/* pass products to category grid if needed */}
+       
         <CategoryGrid products={products} />
 
-        {/* pass only featured */}
+       
         <FeaturedProducts products={featuredProducts} />
       </div>
 

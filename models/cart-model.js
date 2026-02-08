@@ -4,14 +4,14 @@ const cartItemSchema = new Schema(
   {
     productId: { type: Schema.Types.ObjectId, ref: "products", required: true },
     title: { type: String, required: true },
-    slug: { type: String }, // product link
+    slug: { type: String },
     price: { type: Number, required: true },
     currency: { type: String, default: "BDT" },
-    image: { type: String }, // main thumbnail
+    image: { type: String }, 
     quantity: { type: Number, default: 1 },
     stock: { type: Number, default: 0 },
     shopName: { type: String, required: true },
-    freeShipping: { type: Boolean, default: false }, // optional
+    freeShipping: { type: Boolean, default: false },
   },
  
 );

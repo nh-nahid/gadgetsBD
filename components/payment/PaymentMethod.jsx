@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Image from "next/image";
 
 export default function PaymentMethod({
   cardName,
@@ -23,20 +24,26 @@ export default function PaymentMethod({
       </div>
 
       <div className="box p-6 space-y-6 shadow-sm">
-        {/* Credit/Debit Card Option */}
         <label className="flex items-start gap-3 p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-amazon-background transition-colors bg-gray-50 border-amazon-orange ring-1 ring-amazon-orange">
           <div>
-            <span className="font-bold block text-sm">Credit or Debit Card</span>
-            <div className="flex gap-2 mt-2">
-              <img
+            <span className="font-bold block text-sm">
+              Credit or Debit Card
+            </span>
+
+            <div className="flex gap-2 mt-2 items-center">
+              <Image
                 src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"
-                className="h-4"
                 alt="Visa"
+                width={40}
+                height={16}
+                className="h-4 w-auto"
               />
-              <img
+              <Image
                 src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
-                className="h-4"
                 alt="Mastercard"
+                width={40}
+                height={16}
+                className="h-4 w-auto"
               />
             </div>
           </div>
@@ -44,7 +51,9 @@ export default function PaymentMethod({
 
         <div id="cardInputs" className="pl-8 space-y-4 mt-2">
           <div>
-            <label className="text-xs font-bold block mb-1">Name on card</label>
+            <label className="text-xs font-bold block mb-1">
+              Name on card
+            </label>
             <input
               type="text"
               value={cardName}
@@ -56,7 +65,9 @@ export default function PaymentMethod({
 
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
-              <label className="text-xs font-bold block mb-1">Card number</label>
+              <label className="text-xs font-bold block mb-1">
+                Card number
+              </label>
               <input
                 type="text"
                 value={cardNumber}
@@ -79,7 +90,9 @@ export default function PaymentMethod({
           </div>
 
           <div>
-            <label className="text-xs font-bold block mb-1">Expiration date</label>
+            <label className="text-xs font-bold block mb-1">
+              Expiration date
+            </label>
             <div className="flex gap-2">
               <select
                 value={expMonth}
@@ -88,7 +101,10 @@ export default function PaymentMethod({
               >
                 <option value="">Month</option>
                 {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i + 1} value={String(i + 1).padStart(2, "0")}>
+                  <option
+                    key={i + 1}
+                    value={String(i + 1).padStart(2, "0")}
+                  >
                     {String(i + 1).padStart(2, "0")}
                   </option>
                 ))}
@@ -100,11 +116,13 @@ export default function PaymentMethod({
                 className="bg-gray-100 border border-gray-300 rounded p-1 text-xs"
               >
                 <option value="">Year</option>
-                {Array.from({ length: 6 }, (_, i) => 2025 + i).map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
+                {Array.from({ length: 6 }, (_, i) => 2025 + i).map(
+                  (year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  )
+                )}
               </select>
             </div>
           </div>

@@ -1,4 +1,3 @@
-// app/api/orders/route.js
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/services/mongo";
 import orderModel from "@/models/order-model";
@@ -13,7 +12,6 @@ export async function POST(req) {
     const body = await req.json();
     const { userId, userEmail, items, shippingAddress, summary, payment } = body;
 
-    // ---------------- Basic validations ----------------
     if (!userId || !items?.length || !shippingAddress) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -28,7 +26,6 @@ export async function POST(req) {
       );
     }
 
-    // ---------------- Build order items ----------------
     const orderItems = await Promise.all(
       items.map(async (item) => {
         const product = await productModel.findById(item.productId).lean();
@@ -49,7 +46,6 @@ export async function POST(req) {
 
     const orderNumber = `GB-${Date.now()}`;
 
-    // ---------------- Create order ----------------
     const order = await orderModel.create({
       userId,
       items: orderItems,
@@ -63,7 +59,7 @@ export async function POST(req) {
       orderNumber,
     });
 
-    // ---------------- Fire-and-forget: generate PDF & send email ----------------
+
     sendInvoiceEmail({
       to: userEmail,
       subject: `Invoice for your Order ${orderNumber}`,
@@ -79,7 +75,7 @@ export async function POST(req) {
       .then(() => console.log(`✅ Invoice email sent to ${userEmail}`))
       .catch((err) => console.error("❌ Invoice/email failed:", err));
 
-    // ---------------- Return response ----------------
+    
     return NextResponse.json(
       { success: true, orderId: order._id, orderNumber },
       { status: 201 }

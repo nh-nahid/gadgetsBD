@@ -18,9 +18,9 @@ export default function BuyBox({ product }) {
   const userId = session?.user?.id;
   const role = session?.user?.role || "USER";
 
-  // ---------------- SYNC CART STATE ----------------
+
   useEffect(() => {
-    if (!userId || role === "SHOP_OWNER") return; // ✅ Skip shop owners
+    if (!userId || role === "SHOP_OWNER") return; 
 
     const checkCart = async () => {
       try {
@@ -184,7 +184,6 @@ export default function BuyBox({ product }) {
         </select>
       </div>
 
-      {/* ---------------- CART / MANAGE BUTTON ---------------- */}
       {role === "SHOP_OWNER" ? (
         <Link
           href={`/products/${product.slug}`}
@@ -216,7 +215,7 @@ export default function BuyBox({ product }) {
 
       <button
         onClick={buyNow}
-        disabled={product.stock === 0 || role === "SHOP_OWNER"} // disable buy for shop owner
+        disabled={product.stock === 0 || role === "SHOP_OWNER"} 
         className={`w-full bg-amazon-secondary hover:bg-amazon-secondary_hover py-2 rounded-md shadow-sm text-sm font-medium text-white ${
           role === "SHOP_OWNER" ? "opacity-50 cursor-not-allowed" : ""
         }`}

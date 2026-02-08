@@ -1,5 +1,3 @@
-// components/ProductGrid.jsx
-
 import ProductCard from "./ProductCard";
 
 

@@ -1,7 +1,7 @@
 import ProductItem from "./ProductItem";
 
 export default function ProductList({ cartItems = [], buyNowProduct = null, onQtyChange }) {
-  // Use productId consistently
+  
   const productsToShow = buyNowProduct
     ? [buyNowProduct, ...cartItems.filter(item => item.productId !== buyNowProduct.productId)]
     : cartItems;
@@ -20,7 +20,7 @@ export default function ProductList({ cartItems = [], buyNowProduct = null, onQt
       <div className="box p-4 space-y-4">
         {productsToShow.map(product => (
           <ProductItem
-            key={product.productId} // use productId consistently
+            key={product.productId} 
             product={product}
             onQtyChange={onQtyChange}
           />

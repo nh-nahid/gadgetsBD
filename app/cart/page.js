@@ -25,7 +25,7 @@ export default function CartPage() {
         const items = cart?.items || [];
         setCartItems(items);
 
-        // Default: all selected
+  
         const allSelected = {};
         items.forEach(i => (allSelected[i.productId] = true));
         setSelectedItems(allSelected);
@@ -58,7 +58,6 @@ export default function CartPage() {
     });
   };
 
-  // Only selected items
   const selectedItemsArray = cartItems.filter(item => selectedItems[item.productId]);
   const subtotal = selectedItemsArray.reduce((sum, item) => sum + item.price * item.quantity, 0);
 

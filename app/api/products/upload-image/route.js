@@ -16,7 +16,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Convert File to Buffer for Node.js
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 

@@ -45,7 +45,7 @@ const PaymentClient = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 1️⃣ Fetch cart
+       
         const resCart = await fetch(`/api/cart/${userId}`);
         let items = [];
         if (resCart.ok) {
@@ -64,7 +64,7 @@ const PaymentClient = () => {
           })) || [];
         }
 
-        // 2️⃣ Buy Now product
+     
         if (buyNowProductId && !fromCart) {
           const resProduct = await fetch(`/api/products/${buyNowProductId}`);
           if (resProduct.ok) {
@@ -85,7 +85,7 @@ const PaymentClient = () => {
           }
         }
 
-        // 3️⃣ From cart -> only selected
+     
         if (fromCart) {
           const productIds = searchParams.getAll("productId");
           const qtys = searchParams.getAll("qty").map(Number);
@@ -101,7 +101,7 @@ const PaymentClient = () => {
           setCartItems(items);
         }
 
-        // 4️⃣ Shipping address
+   
         const resUser = await fetch(`/api/users/${session.user.email}`);
         if (resUser.ok) {
           const data = await resUser.json();

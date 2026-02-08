@@ -10,7 +10,6 @@ export default function ReviewForm({ productId, userId, userName, existingReview
     comment: "",
   });
 
-  // Prefill form if editing
   useEffect(() => {
     if (existingReview) {
       setReview({
@@ -21,7 +20,6 @@ export default function ReviewForm({ productId, userId, userName, existingReview
     }
   }, [existingReview]);
 
-  // Helper to calculate initials from userName
   const getInitials = (name) => {
     if (!name) return "U";
     return name

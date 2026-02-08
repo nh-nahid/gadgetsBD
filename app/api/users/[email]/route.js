@@ -1,4 +1,3 @@
-// app/api/users/[email]/route.js
 import { NextResponse } from "next/server";
 import { getUserByEmail } from "@/database/queries";
 

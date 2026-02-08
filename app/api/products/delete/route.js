@@ -24,13 +24,12 @@ export async function POST(req) {
     await dbConnect();
     console.log("[Delete Product] Mongo connected");
 
-    // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(productId)) {
       console.error("[Delete Product] Invalid ObjectId:", productId);
       return new Response(JSON.stringify({ error: "Invalid Product ID" }), { status: 400 });
     }
 
-    // Find the product owned by this user
+
     const product = await productModel.findOne({ _id: productId, "shop.shopOwnerId": userId });
     if (!product) {
       console.error("[Delete Product] Product not found or not owned by user");

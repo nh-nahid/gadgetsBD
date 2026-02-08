@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { CheckCircle, Truck, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
 
 import OrderInvoiceButton from "./OrderInvoiceButton";
 import OrderReviewCard from "./OrderReviewCard";
-import Link from "next/link";
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -17,9 +18,21 @@ const statusColors = {
   cancelled: "bg-red-100 text-red-700",
 };
 
-const statusOrder = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+const statusOrder = [
+  "pending",
+  "confirmed",
+  "shipped",
+  "delivered",
+  "cancelled",
+];
 
-const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
+const OrderProduct = ({
+  product,
+  isFirst,
+  role,
+  orderId,
+  orderNumber,
+}) => {
   const router = useRouter();
   const session = useSession();
   const userId = session?.data?.user?.id;
@@ -29,13 +42,14 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
   const [loadingReview, setLoadingReview] = useState(true);
   const [productStatus, setProductStatus] = useState(product.status);
 
-  // ---------------- FETCH EXISTING REVIEW ----------------
   useEffect(() => {
     if (role === "USER" && userId) {
       const fetchReview = async () => {
         setLoadingReview(true);
         try {
-          const res = await fetch(`/api/reviews?productId=${product.productId}`);
+          const res = await fetch(
+            `/api/reviews?productId=${product.productId}`
+          );
           const data = await res.json();
           const myReview =
             productStatus === "delivered"
@@ -52,7 +66,6 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
     }
   }, [product.productId, role, userId, productStatus]);
 
-  // ---------------- CANCEL ORDER (USER) ----------------
   const handleCancelOrder = async () => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
     try {
@@ -65,7 +78,7 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
       if (res.ok) {
         setProductStatus("cancelled");
         alert("Order cancelled successfully!");
-        router.refresh(); // refresh orders list if user goes back
+        router.refresh();
       } else {
         alert(data.message || "Failed to cancel order");
       }
@@ -75,14 +88,13 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
     }
   };
 
-  // ---------------- REORDER ----------------
   const handleReorder = async () => {
     if (!confirm("Do you want to reorder this product?")) return;
     try {
       const payload = {
         productId: product.productId,
         quantity: product.quantity,
-        userId: userId,
+        userId,
         title: product.name,
         slug: product.slug || "",
         shopName: product.seller,
@@ -111,20 +123,22 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
     }
   };
 
-  // ---------------- SHOP OWNER STATUS UPDATE ----------------
   const handleChangeStatus = async (newStatus) => {
     if (newStatus === productStatus) return;
     try {
       const res = await fetch(`/api/orders/${orderId}/update-status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.productId, status: newStatus }),
+        body: JSON.stringify({
+          productId: product.productId,
+          status: newStatus,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
         setProductStatus(newStatus);
         alert("Status updated successfully!");
-        router.refresh(); // <-- refresh the page to sync data with server
+        router.refresh();
       } else {
         alert(data.message || "Failed to update status");
       }
@@ -134,57 +148,83 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
     }
   };
 
-  // ---------------- REVIEW LOGIC ----------------
   const canWriteReview =
-    role === "USER" && productStatus === "delivered" && !existingReview && !loadingReview;
+    role === "USER" &&
+    productStatus === "delivered" &&
+    !existingReview &&
+    !loadingReview;
 
   const showThankYou =
-    role === "USER" && productStatus === "delivered" && existingReview && !loadingReview;
+    role === "USER" &&
+    productStatus === "delivered" &&
+    existingReview &&
+    !loadingReview;
 
-  // ---------------- RENDER ----------------
   return (
-    <div className={`flex gap-4 ${!isFirst ? "pt-6 border-t border-gray-200" : ""}`}>
+    <div
+      className={`flex gap-4 ${
+        !isFirst ? "pt-6 border-t border-gray-200" : ""
+      }`}
+    >
       {/* Product Image */}
-      <img
-        src={product.image}
-        alt={product.name}
-        className="w-32 h-32 object-cover border border-gray-200 rounded"
-      />
+      <div className="w-32 h-32 flex-shrink-0 relative">
+        <Image
+          src={product.image || "/placeholder.png"}
+          alt={product.name}
+          fill
+          sizes="128px"
+          className="object-cover border border-gray-200 rounded"
+        />
+      </div>
 
       <div className="flex-1">
-        {/* Product Info */}
         <Link
           href={`/products/${product.productId}`}
           className="text-amazon-blue hover:underline font-bold text-sm"
         >
           {product.name}
         </Link>
-        <p className="text-xs text-gray-600 mt-1">Sold by: {product.seller}</p>
-        <p className="text-xs text-gray-600 mt-1">Quantity: {product.quantity}</p>
 
-        {/* Status Badge */}
+        <p className="text-xs text-gray-600 mt-1">
+          Sold by: {product.seller}
+        </p>
+
+        <p className="text-xs text-gray-600 mt-1">
+          Quantity: {product.quantity}
+        </p>
+
         <div className="mt-2">
           <span
-            className={`inline-flex items-center px-3 py-1 ${statusColors[productStatus]} text-xs font-bold rounded-full`}
+            className={`inline-flex items-center px-3 py-1 ${
+              statusColors[productStatus]
+            } text-xs font-bold rounded-full`}
           >
-            {productStatus === "delivered" && <CheckCircle className="w-3 h-3 mr-1" />}
-            {productStatus === "shipped" && <Truck className="w-3 h-3 mr-1" />}
-            {productStatus.charAt(0).toUpperCase() + productStatus.slice(1)}
+            {productStatus === "delivered" && (
+              <CheckCircle className="w-3 h-3 mr-1" />
+            )}
+            {productStatus === "shipped" && (
+              <Truck className="w-3 h-3 mr-1" />
+            )}
+            {productStatus.charAt(0).toUpperCase() +
+              productStatus.slice(1)}
           </span>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2 mt-4 flex-wrap items-center">
-          {role === "USER" && <OrderInvoiceButton orderId={orderNumber} />}
-
-          {(productStatus === "pending" || productStatus === "confirmed") && role === "USER" && (
-            <button
-              onClick={handleCancelOrder}
-              className="px-4 py-1.5 border border-red-300 bg-red-50 text-red-700 rounded-md text-xs hover:bg-red-100 flex items-center gap-1 flex-shrink-0"
-            >
-              <XCircle className="w-3 h-3" /> Cancel Order
-            </button>
+          {role === "USER" && (
+            <OrderInvoiceButton orderId={orderNumber} />
           )}
+
+          {(productStatus === "pending" ||
+            productStatus === "confirmed") &&
+            role === "USER" && (
+              <button
+                onClick={handleCancelOrder}
+                className="px-4 py-1.5 border border-red-300 bg-red-50 text-red-700 rounded-md text-xs hover:bg-red-100 flex items-center gap-1 flex-shrink-0"
+              >
+                <XCircle className="w-3 h-3" /> Cancel Order
+              </button>
+            )}
 
           {canWriteReview && (
             <button
@@ -233,7 +273,6 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
             ))}
         </div>
 
-        {/* Review Form */}
         {showReviewForm && !existingReview && (
           <div className="mt-2 w-full max-w-md">
             <OrderReviewCard
@@ -248,7 +287,6 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
           </div>
         )}
 
-        {/* Thank You Message */}
         {showThankYou && (
           <div className="mt-2 p-2 border rounded-md bg-green-50 text-green-800 text-xs max-w-md">
             Thank you for your review!

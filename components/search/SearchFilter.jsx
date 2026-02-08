@@ -29,7 +29,6 @@ const SearchFilter = () => {
 
   return (
     <div className="flex-1 flex h-10 rounded-md overflow-hidden focus-within:ring-3 focus-within:ring-amazon-secondary">
-      {/* Category Select */}
       <select
         className="bg-gray-100 text-black text-xs px-2 border-r border-gray-300 cursor-pointer hover:bg-gray-200"
         value={selectedCategory}
@@ -42,18 +41,16 @@ const SearchFilter = () => {
         ))}
       </select>
 
-      {/* Search Input */}
       <input
         type="text"
-        name="search-query"          // unique name to prevent autofill
-        autoComplete="off"           // turn off browser autofill
+        name="search-query"         
+        autoComplete="off"           
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search Gadgets, Laptops, Phones..."
         className="flex-1 px-3 text-black outline-none"
       />
 
-      {/* Search Button */}
       <button
         onClick={() => performSearch.flush()}
         className="bg-amazon-secondary hover:bg-[#fa8900] px-4 flex items-center justify-center"

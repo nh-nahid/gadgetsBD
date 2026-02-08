@@ -28,7 +28,6 @@ export default function ShopProfilePage({ shop, setShop }) {
 
   return (
     <main className="max-w-[1200px] mx-auto w-full p-6">
-      {/* Header */}
       <div className="mb-8 flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-normal">Shop Profile</h1>
@@ -52,7 +51,6 @@ export default function ShopProfilePage({ shop, setShop }) {
         </div>
       </div>
 
-      {/* Content */}
       {isEditMode ? (
         <ShopEdit shop={defaultShop} setIsEditMode={setIsEditMode} setShop={setShop} />
       ) : (

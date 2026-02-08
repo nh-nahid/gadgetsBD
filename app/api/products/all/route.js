@@ -20,22 +20,20 @@ export async function GET(req) {
     const db = (await mongoClientPromise).db();
     const productsCol = db.collection("products");
 
-    // 🔹 Always filter by shopOwnerId for management
+
     const filter = { "shop.shopOwnerId": new ObjectId(userId) };
 
-    // 🔹 Search / category / brand
+
     if (search) filter.title = { $regex: search, $options: "i" };
     if (category && category !== "All Categories") filter.category = category;
     if (brand && brand !== "All Brands") filter.brand = brand;
 
-    // 🔹 Stock filter
     if (status && status !== "All") {
-      if (status === "In Stock") filter.stock = { $gt: 5 };           // full stock
-      if (status === "Low Stock") filter.stock = { $gte: 1, $lte: 5 }; // low stock
-      if (status === "Out of Stock") filter.stock = 0;                 // out of stock
+      if (status === "In Stock") filter.stock = { $gt: 5 };          
+      if (status === "Low Stock") filter.stock = { $gte: 1, $lte: 5 };
+      if (status === "Out of Stock") filter.stock = 0;                 
     }
 
-    // 🔹 Pagination
     const total = await productsCol.countDocuments(filter);
     const products = await productsCol
       .find(filter)

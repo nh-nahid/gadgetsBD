@@ -149,7 +149,6 @@ const FeaturedProductCard = ({ product }) => {
         </div>
       )}
 
-      {/* Button logic */}
       {role === "SHOP_OWNER" ? (
         <Link
           href={`/products/${product.slug}`}
