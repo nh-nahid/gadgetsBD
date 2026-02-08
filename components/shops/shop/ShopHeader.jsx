@@ -1,6 +1,8 @@
 import Image from "next/image";
 
 export default function ShopHeader({ shop }) {
+  
+  
   return (
     <div className="relative h-64 w-full mb-6 rounded-sm overflow-hidden">
       <Image

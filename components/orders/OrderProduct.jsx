@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 
 import OrderInvoiceButton from "./OrderInvoiceButton";
 import OrderReviewCard from "./OrderReviewCard";
+import Link from "next/link";
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -152,12 +153,12 @@ const OrderProduct = ({ product, isFirst, role, orderId, orderNumber }) => {
 
       <div className="flex-1">
         {/* Product Info */}
-        <a
+        <Link
           href={`/products/${product.productId}`}
           className="text-amazon-blue hover:underline font-bold text-sm"
         >
           {product.name}
-        </a>
+        </Link>
         <p className="text-xs text-gray-600 mt-1">Sold by: {product.seller}</p>
         <p className="text-xs text-gray-600 mt-1">Quantity: {product.quantity}</p>
 

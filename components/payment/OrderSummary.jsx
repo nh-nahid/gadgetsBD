@@ -43,8 +43,21 @@ export default function OrderSummary({
 
     const items = productsToShow.map(p => ({
       productId: p.productId,
+      title: p.title,
+      image: p.image,
+      price: Number(p.price),
       quantity: Number(p.quantity),
+      seller: p.seller,
+      shopOwnerId: p.shopOwnerId || null,
+      status: "pending",
+      reviewGiven: false,
+      _id: p._id || undefined,
     }));
+    ;
+console.log("Order items to send:");
+items.forEach(item => {
+  console.log("Title:", item.title, "shopOwnerId:", item.shopOwnerId);
+});
 
     try {
       setIsLoading(true); // <-- Start loading
@@ -81,9 +94,8 @@ export default function OrderSummary({
         <button
           onClick={handlePlaceOrder}
           disabled={isLoading} // <-- Disable button while loading
-          className={`w-full py-2 mb-4 rounded-md btn-primary text-sm font-normal shadow-sm ${
-            isLoading ? "opacity-60 cursor-not-allowed" : ""
-          }`}
+          className={`w-full py-2 mb-4 rounded-md btn-primary text-sm font-normal shadow-sm ${isLoading ? "opacity-60 cursor-not-allowed" : ""
+            }`}
         >
           {isLoading ? "Placing your order..." : "Place your order"} {/* <-- Show loading text */}
         </button>

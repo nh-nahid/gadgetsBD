@@ -42,7 +42,7 @@ export async function POST(req) {
           price: Number(product.price),
           quantity: Number(item.quantity),
           seller: product.shop.shopName || "Unknown",
-          shopOwnerId: product.shop.shopId,
+          shopOwnerId: product.shop?.shopOwnerId || null,
         };
       })
     );

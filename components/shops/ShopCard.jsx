@@ -5,6 +5,7 @@ import Link from "next/link";
 export default function ShopCard({ shop }) {
   if (!shop) return null; 
 
+
   const {
     name = "Unnamed Shop",
     shopSlug = "#",

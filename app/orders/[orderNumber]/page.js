@@ -1,4 +1,4 @@
-// app/orders/[orderId]/page.jsx
+
 import OrderProduct from "@/components/orders/OrderProduct";
 import OrderInvoiceButton from "@/components/orders/OrderInvoiceButton";
 import { redirect } from "next/navigation";
@@ -8,7 +8,7 @@ import { getOrderByNumber, getOrderById } from "@/database/queries";
 const statusOrder = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
 export default async function OrderDetailsPage({ params }) {
-  const { orderNumber } = params; // This param is either orderNumber (user) or _id (shop owner)
+  const { orderNumber } = params; 
   
   const session = await auth();
   const userId = session?.user?.id;
@@ -17,10 +17,10 @@ export default async function OrderDetailsPage({ params }) {
   let order;
 
   if (role === "SHOP_OWNER") {
-    // Shop owner: fetch by _id
+  
     order = await getOrderById(orderNumber);
   } else {
-    // User: fetch by orderNumber
+
     order = await getOrderByNumber(orderNumber);
   }
 
@@ -28,14 +28,14 @@ export default async function OrderDetailsPage({ params }) {
     redirect("/orders");
   }
 
-  // Users can only see their own orders
+
   if (role === "USER" && String(order.userId) !== String(userId)) {
     redirect("/orders");
   }
 
   return (
     <div className="max-w-4xl mx-auto py-6 space-y-6">
-      {/* Order Header */}
+
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Order #{order.orderNumber}</h1>
         <p className="text-sm text-gray-600">
@@ -43,13 +43,13 @@ export default async function OrderDetailsPage({ params }) {
         </p>
       </div>
 
-      {/* Total & Invoice */}
+ 
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-600">Total: BDT {order.summary?.total}</p>
         {role === "USER" && <OrderInvoiceButton orderId={order.orderNumber} />}
       </div>
 
-      {/* Shipping & Payment Info */}
+
       <div className="p-4 border rounded-md bg-gray-50 space-y-1">
         <p className="text-sm font-semibold">Shipping Address:</p>
         <p className="text-sm text-gray-700">
@@ -60,7 +60,7 @@ export default async function OrderDetailsPage({ params }) {
         <p className="text-sm text-gray-700">{order.payment?.method} ({order.payment?.status})</p>
       </div>
 
-      {/* Status Timeline */}
+
       <div className="flex items-center gap-4 mt-4 overflow-x-auto">
         {statusOrder.map((status, idx) => {
           const completed = statusOrder.indexOf(order.status) >= idx;
@@ -82,7 +82,7 @@ export default async function OrderDetailsPage({ params }) {
         })}
       </div>
 
-      {/* Products List */}
+
       <div className="space-y-6 mt-4">
         {order.items.map((product, index) => (
           <OrderProduct
@@ -94,8 +94,8 @@ export default async function OrderDetailsPage({ params }) {
             }}
             isFirst={index === 0}
             role={role}
-            orderId={order.id}        // Needed for shop owner status updates
-            orderNumber={order.orderNumber} // Needed for invoice download
+            orderId={order.id}        
+            orderNumber={order.orderNumber} 
           />
         ))}
       </div>

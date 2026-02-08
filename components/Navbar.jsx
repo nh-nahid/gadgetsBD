@@ -70,6 +70,8 @@ export default function Navbar() {
       return (
         <>
           <Link href="/" className="px-3 py-2 hover:underline">Home</Link>
+          <Link href="/orders" className="px-2 py-2 hover:underline">Orders</Link>
+
           <Link href="/add-product" className="px-3 py-2 hover:underline">Add Product</Link>
           <Link href="/manage-products" className="px-3 py-2 hover:underline">Manage Products</Link>
           <Logout />

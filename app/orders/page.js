@@ -11,8 +11,8 @@ const OrdersPage = async () => {
     redirect("/login");
   }
 
-  const userId = session.user._id || session.user.id;
-  const role = session.user.role;
+  const userId = session?.user?.id 
+  const role = session?.user?.role;
 
   let orders = [];
 
@@ -20,6 +20,8 @@ const OrdersPage = async () => {
     orders = await getOrdersByUser(userId);
   } else if (role === "SHOP_OWNER") {
     orders = await getOrdersForShopOwner(userId);
+    console.log(orders);
+    
   }
 
   return (
@@ -29,7 +31,6 @@ const OrdersPage = async () => {
         {role === "USER" ? "Your Orders" : "Orders for Your Shop"}
       </h1>
 
-      {/* 👇 CLIENT SIDE FILTER + LIST */}
       <OrdersClient orders={orders} role={role} />
     </main>
   );

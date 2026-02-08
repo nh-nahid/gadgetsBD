@@ -21,7 +21,13 @@ export default async function ShopPage({ params }) {
 
   const allProducts = await getAllProducts({ limit: 50 }); 
   
-  const products = allProducts.filter((p) => p.shop.shopId === shop.shopOwnerId);
+const products = allProducts.filter((p) => {
+  const productShopOwnerId = (p.shop.shopOwnerId || p.shop.shopId)?.toString();
+  const shopOwnerId = (shop.shopOwnerId || shop.shopId)?.toString();
+  return productShopOwnerId === shopOwnerId;
+});
+
+
 
   return (
     <main className="max-w-[1500px] mx-auto p-4 py-8">
