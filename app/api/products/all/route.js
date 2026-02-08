@@ -1,12 +1,13 @@
 import mongoClientPromise from "@/database/mongoClientPromise";
 import { ObjectId } from "mongodb";
+export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
   try {
     const url = new URL(req.url);
     const searchParams = url.searchParams;
 
-    const userId = searchParams.get("userId"); // shop owner id
+    const userId = searchParams.get("userId"); 
     const search = searchParams.get("search") || "";
     const category = searchParams.get("category") || "";
     const brand = searchParams.get("brand") || "";
