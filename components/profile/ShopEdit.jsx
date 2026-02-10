@@ -6,37 +6,51 @@ import Image from "next/image";
 import React, { useState } from "react";
 
 export default function ShopEdit({ shop, setShop, setIsEditMode  }) {
-  const [bannerPreview, setBannerPreview] = useState(shop.coverImage || "");
+   const [bannerPreview, setBannerPreview] = useState(shop.coverImage || "");
   const [bannerFile, setBannerFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-
-  const handleBannerChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (!["image/jpeg", "image/png"].includes(file.type)) {
-      setErrors({ ...errors, banner: "Only JPG or PNG images allowed" });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors({ ...errors, banner: "Image must be under 5MB" });
-      return;
-    }
-    setErrors({ ...errors, banner: null });
-    setBannerFile(file);
-    setBannerPreview(URL.createObjectURL(file));
-  };
 
   const validate = (data) => {
     const err = {};
     if (!data.name) err.name = "Shop name is required";
     if (!data.ownerName) err.ownerName = "Owner name is required";
     if (!data.email) err.email = "Email is required";
+    else if (!/^\S+@\S+\.\S+$/.test(data.email)) err.email = "Invalid email address";
     if (!data.phone) err.phone = "Phone number is required";
     if (!data.description) err.description = "Description is required";
     if (!data.address) err.address = "Address is required";
+    if (data.yearEstablished) {
+      const year = Number(data.yearEstablished);
+      if (year < 1900 || year > new Date().getFullYear()) {
+        err.yearEstablished = "Enter a valid year";
+      }
+    }
+    if (data.employees && Number(data.employees) < 0) {
+      err.employees = "Employees cannot be negative";
+    }
     return err;
+  };
+
+  const handleBannerChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const newErrors = { ...errors };
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      newErrors.banner = "Only JPG or PNG images allowed";
+      setErrors(newErrors);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      newErrors.banner = "Image must be under 5MB";
+      setErrors(newErrors);
+      return;
+    }
+    delete newErrors.banner;
+    setErrors(newErrors);
+    setBannerFile(file);
+    setBannerPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
@@ -48,9 +62,9 @@ export default function ShopEdit({ shop, setShop, setIsEditMode  }) {
       email: form.email.value,
       phone: form.phone.value,
       description: form.description.value,
-      city: form.city.value || shop.location.city,
-      specializesIn: form.specializesIn.value || shop.specializesIn?.[0],
-      address: form.address.value,
+      city: form.city.value || shop.location.city || "Unknown",
+      specializesIn: form.specializesIn.value || shop.specializesIn?.[0] || "General",
+      address: form.address.value || "",
       yearEstablished: form.yearEstablished.value,
       employees: form.employees.value,
       brands: form.brands.value,
@@ -69,23 +83,39 @@ export default function ShopEdit({ shop, setShop, setIsEditMode  }) {
       try {
         const bannerForm = new FormData();
         bannerForm.append("file", bannerFile);
-        const uploadRes = await fetch("/api/shop/upload-banner", { method: "POST", body: bannerForm });
+
+        const uploadRes = await fetch("/api/shop/upload-banner", {
+          method: "POST",
+          body: bannerForm,
+        });
+
         const uploadData = await uploadRes.json();
-        coverImage = uploadData.url || coverImage;
+        if (!uploadRes.ok || !uploadData.url) throw new Error("Image upload failed");
+
+        coverImage = uploadData.url;
       } catch (err) {
-        alert("Banner upload failed");
+        console.error("Banner upload failed:", err);
+        alert("Banner upload failed ❌");
         setLoading(false);
         return;
       }
     }
 
     const payload = {
-      ...formData,
+      name: formData.name,
+      ownerName: formData.ownerName,
+      email: formData.email,
+      phone: formData.phone,
+      description: formData.description,
       location: { city: formData.city, country: "Bangladesh" },
       specializesIn: [formData.specializesIn],
-      yearEstablished: Number(formData.yearEstablished),
-      employees: Number(formData.employees),
-      brands: formData.brands.split(",").map(b => b.trim()).filter(Boolean),
+      address: formData.address,
+      yearEstablished: formData.yearEstablished ? Number(formData.yearEstablished) : null,
+      employees: formData.employees ? Number(formData.employees) : null,
+      brands: formData.brands
+        ? formData.brands.split(",").map((b) => b.trim()).filter(Boolean)
+        : [],
+      website: formData.website || "",
       coverImage,
     };
 
@@ -95,19 +125,21 @@ export default function ShopEdit({ shop, setShop, setIsEditMode  }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const resData = await res.json();
       if (!res.ok) throw new Error(resData.error || "Update failed");
 
-      setShop(resData.shop); // ✅ instantly update view
-      setIsEditMode(false);
+      setShop(resData.shop); // ← instantly updates ShopView
       alert("Shop updated successfully ✅");
+      setIsEditMode(false);
     } catch (err) {
+      console.error("Error updating shop:", err);
       alert("Something went wrong ❌");
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
 

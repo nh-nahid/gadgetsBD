@@ -1,10 +1,29 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import ShopView from "./ShopView";
 import ShopEdit from "./ShopEdit";
 
 export default function ShopProfilePage({ shop, setShop }) {
   const [isEditMode, setIsEditMode] = useState(false);
+
+  const defaultShop = {
+    name: "",
+    shopSlug: "",
+    ownerName: "",
+    email: "",
+    phone: "",
+    description: "No description provided",
+    coverImage: "/placeholder.png",
+    location: { city: "Unknown", country: "Bangladesh" },
+    address: "",
+    rating: { average: 0, count: 0 },
+    specializesIn: ["General"],
+    yearEstablished: new Date().getFullYear(),
+    employees: 0,
+    brands: [],
+    website: "",
+    ...shop,
+  };
 
   return (
     <main className="max-w-[1200px] mx-auto w-full p-6">
@@ -32,13 +51,9 @@ export default function ShopProfilePage({ shop, setShop }) {
       </div>
 
       {isEditMode ? (
-        <ShopEdit
-          shop={shop}
-          setIsEditMode={setIsEditMode}
-          setShop={setShop} // updates ProfilePage state
-        />
+        <ShopEdit shop={defaultShop} setIsEditMode={setIsEditMode} setShop={setShop} />
       ) : (
-        <ShopView shop={shop} />
+        <ShopView shop={defaultShop} />
       )}
     </main>
   );

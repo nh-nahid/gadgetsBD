@@ -28,22 +28,18 @@ export default function ProfilePage() {
     fetchShop();
   }, [session]);
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amazon-blue mb-4"></div>
-        <p className="text-gray-700 text-lg font-medium">Loading shop details...</p>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-12">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amazon-blue mb-4"></div>
+      <p className="text-gray-700 text-lg font-medium">Loading shop details...</p>
+    </div>
+  );
 
-  if (!shop) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-gray-700 text-lg font-medium">You don&apos;t have a shop yet.</p>
-      </div>
-    );
-  }
+  if (!shop) return (
+    <div className="flex flex-col items-center justify-center py-12">
+      <p className="text-gray-700 text-lg font-medium">You don&apos;t have a shop yet.</p>
+    </div>
+  );
 
   return <ShopProfilePage shop={shop} setShop={setShop} />;
 }
