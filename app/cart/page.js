@@ -61,8 +61,6 @@ export default function CartPage() {
   const selectedItemsArray = cartItems.filter(item => selectedItems[item.productId]);
   const subtotal = selectedItemsArray.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  if (!loading && cartItems.length === 0)
-    return <p className="text-center py-10">Your cart is empty.</p>;
 
   return (
     <main className="max-w-[1500px] mx-auto w-full p-4">
