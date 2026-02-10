@@ -10,15 +10,9 @@ export async function dbConnect() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,      
-      dbName: "gadgetsBD",        
-      tls: true,                  
-      tlsAllowInvalidCertificates: false, 
-    };
-
-    cached.promise = mongoose.connect(process.env.MONGODB_CONNECTION_STRING, opts)
-      .then((mongoose) => mongoose);
+    cached.promise = mongoose.connect(process.env.MONGODB_CONNECTION_STRING, {
+      bufferCommands: false, 
+    }).then((mongoose) => mongoose);
   }
 
   cached.conn = await cached.promise;
