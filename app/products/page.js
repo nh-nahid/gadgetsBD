@@ -1,46 +1,38 @@
-// app/products/page.jsx
 import ProductGrid from "@/components/products/ProductGrid";
 import SidebarFilter from "@/components/search/SidebarFilter";
 import { getAllProducts } from "@/database/queries";
-import { slugify } from "@/utils/slugify";
 import SortDropdown from "@/components/search/SortDropDown";
 import SearchResultsHeader from "@/components/search/SearchResultHeader";
 import Link from "next/link";
 import { replaceMongoIdInArray } from "@/utils/data-util";
+import { slugify } from "@/utils/slugify";
 
 const BATCH_SIZE = 6;
 
-// Price slug → numeric range
 const priceSlugToRange = (slug) => {
   switch (slug) {
-    case "under-10000": return [0, 10000];
-    case "10000-25000": return [10000, 25000];
-    case "25000-50000": return [25000, 50000];
-    case "50000-100000": return [50000, 100000];
-    case "over-100000": return [100000, Infinity];
-    default: return [0, Infinity];
+    case "under-10000":
+      return [0, 10000];
+    case "10000-25000":
+      return [10000, 25000];
+    case "25000-50000":
+      return [25000, 50000];
+    case "50000-100000":
+      return [50000, 100000];
+    case "over-100000":
+      return [100000, Infinity];
+    default:
+      return [0, Infinity];
   }
 };
 
-// Normalize function for consistent comparison
 const normalize = (str) => slugify(String(str || "").trim().toLowerCase());
-
-// Map sidebar category → actual DB category
-const categoryMap = {
-  "Laptops & Computers": "Laptops",
-  "Smartphones & Tablets": "Smartphones",
-  "Audio & Headphones": "Audio",
-  "Gaming Accessories": "Gaming",
-  "Cameras & Photography": "Cameras",
-  "Wearables & Smartwatches": "Wearables",
-};
 
 const ProductsPage = async ({ searchParams }) => {
   const limit = searchParams?.limit ? Number(searchParams.limit) : BATCH_SIZE;
   const keyword = searchParams?.q || "";
   const sort = searchParams?.sort || "featured";
 
-  // Helper to extract multi-select params
   const extractParam = (key) => {
     if (!searchParams?.[key]) return [];
     return Array.isArray(searchParams[key])
@@ -48,7 +40,6 @@ const ProductsPage = async ({ searchParams }) => {
       : [searchParams[key]].filter((v) => v.toLowerCase() !== "all");
   };
 
-  // Get selected filters from URL
   const selectedCategories = extractParam("category");
   const selectedBrands = extractParam("brand");
   const selectedPrices = extractParam("price");
@@ -57,14 +48,11 @@ const ProductsPage = async ({ searchParams }) => {
   const selectedReviews = extractParam("review");
 
   let allProducts = await getAllProducts();
-
   allProducts = replaceMongoIdInArray(allProducts);
 
   if (selectedCategories.length > 0) {
     allProducts = allProducts.filter((p) =>
-      selectedCategories.some(
-        (cat) => normalize(p.category) === normalize(categoryMap[cat] || cat)
-      )
+      selectedCategories.includes(slugify(p.category))
     );
   }
 
@@ -89,13 +77,11 @@ const ProductsPage = async ({ searchParams }) => {
     );
   }
 
-
   if (selectedAvailability.length > 0) {
     allProducts = allProducts.filter((p) =>
       selectedAvailability.includes(normalize(p.availability))
     );
   }
-
 
   if (selectedReviews.length > 0) {
     allProducts = allProducts.filter((p) =>
@@ -106,7 +92,6 @@ const ProductsPage = async ({ searchParams }) => {
     );
   }
 
-
   if (keyword) {
     const lowerKeyword = keyword.toLowerCase();
     allProducts = allProducts.filter(
@@ -116,10 +101,10 @@ const ProductsPage = async ({ searchParams }) => {
     );
   }
 
-
   const getCreatedAt = (product) => {
     if (product.createdAt) return new Date(product.createdAt);
-    if (product.id) return new Date(parseInt(product.id.substring(0, 8), 16) * 1000);
+    if (product.id)
+      return new Date(parseInt(product.id.substring(0, 8), 16) * 1000);
     return new Date(0);
   };
 
@@ -140,7 +125,6 @@ const ProductsPage = async ({ searchParams }) => {
       allProducts.sort((a, b) => (b.purchaseCount || 0) - (a.purchaseCount || 0));
       break;
   }
-
 
   const products = allProducts.slice(0, limit);
   const hasMore = allProducts.length > limit;
@@ -165,8 +149,8 @@ const ProductsPage = async ({ searchParams }) => {
             keyword
               ? keyword
               : selectedCategories.length > 0
-                ? selectedCategories.map((c) => c.replace(/-/g, " ")).join(", ")
-                : "All"
+              ? selectedCategories.map((c) => c.replace(/-/g, " ")).join(", ")
+              : "All"
           }
           showingFrom={1}
           showingTo={products.length}
@@ -175,16 +159,11 @@ const ProductsPage = async ({ searchParams }) => {
       </div>
 
       <div className="flex gap-6">
-      
         <SidebarFilter />
-
-       
         <div className="flex-1 space-y-4">
           {products.length > 0 ? (
             <>
               <ProductGrid products={products} />
-
-             
               {hasMore && (
                 <div className="flex justify-center mt-4">
                   <Link

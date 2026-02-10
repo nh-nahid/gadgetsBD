@@ -17,15 +17,6 @@ export default function SidebarFilter() {
     "Wearables & Smartwatches",
   ];
 
-  const categoryMap = {
-    "Laptops & Computers": "Laptops",
-    "Smartphones & Tablets": "phones",
-    "Audio & Headphones": "Audio",
-    "Gaming Accessories": "Gaming",
-    "Cameras & Photography": "Cameras",
-    "Wearables & Smartwatches": "Wearables",
-  };
-
   const brands = ["Apple", "Samsung", "Dell", "HP", "Lenovo", "Sony", "Razer"];
   const prices = [
     "Under ৳10,000",
@@ -44,7 +35,6 @@ export default function SidebarFilter() {
   const [selectedConditions, setSelectedConditions] = useState([]);
   const [selectedAvailability, setSelectedAvailability] = useState([]);
   const [selectedReviews, setSelectedReviews] = useState([]);
-
 
   useEffect(() => {
     const getSelected = (key) =>
@@ -74,7 +64,6 @@ export default function SidebarFilter() {
   };
 
   const isSelected = (stateArray, value) => stateArray.includes(value);
-
 
   const renderCheckboxList = (items, stateArray, setState, key, mapFn) =>
     items.map((item, idx) => {
@@ -112,8 +101,7 @@ export default function SidebarFilter() {
     }
   };
 
-  const categorySlug = (category) => slugify(categoryMap[category] || category);
-
+  const categorySlug = (category) => slugify(category); 
 
   const reviewSlug = (reviewText) => {
     if (reviewText.startsWith("★★★★")) return "4-star-up";
@@ -123,7 +111,6 @@ export default function SidebarFilter() {
 
   return (
     <div className="w-64 hidden lg:block flex-shrink-0 border-r pr-4 space-y-6">
-    
       <div>
         <h3 className="font-bold text-base mb-3">Category</h3>
         <div className="space-y-2">
@@ -157,7 +144,6 @@ export default function SidebarFilter() {
         </div>
       </div>
 
-    
       <div className="border-t pt-4">
         <h3 className="font-bold text-base mb-3">Price</h3>
         <div className="space-y-2">
