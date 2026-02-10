@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { slugify } from "@/utils/slugify";
 
 export default function SidebarFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const categories = [
     "Laptops & Computers",
@@ -16,7 +17,6 @@ export default function SidebarFilter() {
     "Cameras & Photography",
     "Wearables & Smartwatches",
   ];
-
   const brands = ["Apple", "Samsung", "Dell", "HP", "Lenovo", "Sony", "Razer"];
   const prices = [
     "Under ৳10,000",
@@ -29,16 +29,21 @@ export default function SidebarFilter() {
   const availability = ["In Stock", "Pre-Order"];
   const reviews = ["★★★★☆ & Up", "★★★☆☆ & Up"];
 
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [selectedPrices, setSelectedPrices] = useState([]);
-  const [selectedConditions, setSelectedConditions] = useState([]);
-  const [selectedAvailability, setSelectedAvailability] = useState([]);
-  const [selectedReviews, setSelectedReviews] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState(["all"]);
+  const [selectedBrands, setSelectedBrands] = useState(["all"]);
+  const [selectedPrices, setSelectedPrices] = useState(["all"]);
+  const [selectedConditions, setSelectedConditions] = useState(["all"]);
+  const [selectedAvailability, setSelectedAvailability] = useState(["all"]);
+  const [selectedReviews, setSelectedReviews] = useState(["all"]);
 
+  // Load initial state from URL ONLY if on /products
   useEffect(() => {
-    const getSelected = (key) =>
-      searchParams.getAll(key).filter((v) => v.toLowerCase() !== "all");
+    if (pathname !== "/products") return;
+
+    const getSelected = (key) => {
+      const values = searchParams.getAll(key).filter((v) => v.toLowerCase() !== "all");
+      return values.length ? values : ["all"];
+    };
 
     setSelectedCategories(getSelected("category"));
     setSelectedBrands(getSelected("brand"));
@@ -46,24 +51,28 @@ export default function SidebarFilter() {
     setSelectedConditions(getSelected("condition"));
     setSelectedAvailability(getSelected("availability"));
     setSelectedReviews(getSelected("review"));
-  }, [searchParams?.toString()]);
+  }, [searchParams?.toString(), pathname]);
 
   const handleToggle = (stateArray, setState, key, value) => {
     let newSelected;
-    if (stateArray.includes(value)) {
-      newSelected = stateArray.filter((v) => v !== value);
+
+    if (value === "all") {
+      newSelected = ["all"];
     } else {
-      newSelected = [...stateArray, value];
+      newSelected = stateArray.includes(value)
+        ? stateArray.filter((v) => v !== value)
+        : [...stateArray.filter((v) => v !== "all"), value];
+      if (newSelected.length === 0) newSelected = ["all"];
     }
+
     setState(newSelected);
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete(key);
     newSelected.forEach((v) => params.append(key, v));
+
     router.push(`/products?${params.toString()}`);
   };
-
-  const isSelected = (stateArray, value) => stateArray.includes(value);
 
   const renderCheckboxList = (items, stateArray, setState, key, mapFn) =>
     items.map((item, idx) => {
@@ -76,7 +85,7 @@ export default function SidebarFilter() {
           <input
             type="checkbox"
             className="w-4 h-4 rounded border-gray-300 text-amazon-secondary focus:ring-amazon-secondary"
-            checked={isSelected(stateArray, value)}
+            checked={stateArray.includes(value)}
             onChange={() => handleToggle(stateArray, setState, key, value)}
           />
           <span className="text-sm">{item}</span>
@@ -84,8 +93,8 @@ export default function SidebarFilter() {
       );
     });
 
-  const priceSlug = (price) => {
-    switch (price) {
+  const priceSlug = (p) => {
+    switch (p) {
       case "Under ৳10,000":
         return "under-10000";
       case "৳10,000 - ৳25,000":
@@ -97,17 +106,17 @@ export default function SidebarFilter() {
       case "Over ৳1,00,000":
         return "over-100000";
       default:
-        return slugify(price);
+        return slugify(p);
     }
   };
-
-  const categorySlug = (category) => slugify(category); 
-
-  const reviewSlug = (reviewText) => {
-    if (reviewText.startsWith("★★★★")) return "4-star-up";
-    if (reviewText.startsWith("★★★")) return "3-star-up";
-    return slugify(reviewText);
+  const categorySlug = (c) => slugify(c);
+  const reviewSlug = (r) => {
+    if (r.startsWith("★★★★")) return "4-star-up";
+    if (r.startsWith("★★★")) return "3-star-up";
+    return slugify(r);
   };
+  const availabilitySlug = (a) => slugify(a);
+  const conditionSlug = (c) => slugify(c);
 
   return (
     <div className="w-64 hidden lg:block flex-shrink-0 border-r pr-4 space-y-6">
@@ -134,13 +143,7 @@ export default function SidebarFilter() {
       <div className="border-t pt-4">
         <h3 className="font-bold text-base mb-3">Customer Reviews</h3>
         <div className="space-y-2">
-          {renderCheckboxList(
-            reviews,
-            selectedReviews,
-            setSelectedReviews,
-            "review",
-            reviewSlug
-          )}
+          {renderCheckboxList(reviews, selectedReviews, setSelectedReviews, "review", reviewSlug)}
         </div>
       </div>
 
@@ -158,7 +161,8 @@ export default function SidebarFilter() {
             availability,
             selectedAvailability,
             setSelectedAvailability,
-            "availability"
+            "availability",
+            availabilitySlug
           )}
         </div>
       </div>
@@ -166,12 +170,7 @@ export default function SidebarFilter() {
       <div className="border-t pt-4">
         <h3 className="font-bold text-base mb-3">Condition</h3>
         <div className="space-y-2">
-          {renderCheckboxList(
-            conditions,
-            selectedConditions,
-            setSelectedConditions,
-            "condition"
-          )}
+          {renderCheckboxList(conditions, selectedConditions, setSelectedConditions, "condition", conditionSlug)}
         </div>
       </div>
     </div>

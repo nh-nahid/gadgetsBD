@@ -11,18 +11,12 @@ const BATCH_SIZE = 6;
 
 const priceSlugToRange = (slug) => {
   switch (slug) {
-    case "under-10000":
-      return [0, 10000];
-    case "10000-25000":
-      return [10000, 25000];
-    case "25000-50000":
-      return [25000, 50000];
-    case "50000-100000":
-      return [50000, 100000];
-    case "over-100000":
-      return [100000, Infinity];
-    default:
-      return [0, Infinity];
+    case "under-10000": return [0, 10000];
+    case "10000-25000": return [10000, 25000];
+    case "25000-50000": return [25000, 50000];
+    case "50000-100000": return [50000, 100000];
+    case "over-100000": return [100000, Infinity];
+    default: return [0, Infinity];
   }
 };
 
@@ -33,11 +27,14 @@ const ProductsPage = async ({ searchParams }) => {
   const keyword = searchParams?.q || "";
   const sort = searchParams?.sort || "featured";
 
+  // Extract params
   const extractParam = (key) => {
     if (!searchParams?.[key]) return [];
-    return Array.isArray(searchParams[key])
-      ? searchParams[key].filter((v) => v.toLowerCase() !== "all")
-      : [searchParams[key]].filter((v) => v.toLowerCase() !== "all");
+    const arr = Array.isArray(searchParams[key])
+      ? searchParams[key]
+      : [searchParams[key]];
+    // Ignore "all"
+    return arr.filter((v) => v.toLowerCase() !== "all");
   };
 
   const selectedCategories = extractParam("category");
@@ -49,6 +46,8 @@ const ProductsPage = async ({ searchParams }) => {
 
   let allProducts = await getAllProducts();
   allProducts = replaceMongoIdInArray(allProducts);
+
+  // --- FILTERING LOGIC ---
 
   if (selectedCategories.length > 0) {
     allProducts = allProducts.filter((p) =>
@@ -86,7 +85,7 @@ const ProductsPage = async ({ searchParams }) => {
   if (selectedReviews.length > 0) {
     allProducts = allProducts.filter((p) =>
       selectedReviews.some((slug) => {
-        const minRating = slug.startsWith("★★★★") ? 4 : 3;
+        const minRating = slug.startsWith("4-star") ? 4 : 3;
         return (p.averageRating || 0) >= minRating;
       })
     );
@@ -101,34 +100,22 @@ const ProductsPage = async ({ searchParams }) => {
     );
   }
 
-  const getCreatedAt = (product) => {
-    if (product.createdAt) return new Date(product.createdAt);
-    if (product.id)
-      return new Date(parseInt(product.id.substring(0, 8), 16) * 1000);
-    return new Date(0);
-  };
+  // --- SORTING ---
+  const getCreatedAt = (product) =>
+    product.createdAt ? new Date(product.createdAt) : new Date(0);
 
   switch (sort) {
-    case "price-asc":
-      allProducts.sort((a, b) => a.price - b.price);
-      break;
-    case "price-desc":
-      allProducts.sort((a, b) => b.price - a.price);
-      break;
-    case "rating":
-      allProducts.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
-      break;
-    case "newest":
-      allProducts.sort((a, b) => getCreatedAt(b) - getCreatedAt(a));
-      break;
-    default:
-      allProducts.sort((a, b) => (b.purchaseCount || 0) - (a.purchaseCount || 0));
-      break;
+    case "price-asc": allProducts.sort((a, b) => a.price - b.price); break;
+    case "price-desc": allProducts.sort((a, b) => b.price - a.price); break;
+    case "rating": allProducts.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)); break;
+    case "newest": allProducts.sort((a, b) => getCreatedAt(b) - getCreatedAt(a)); break;
+    default: allProducts.sort((a, b) => (b.purchaseCount || 0) - (a.purchaseCount || 0)); break;
   }
 
   const products = allProducts.slice(0, limit);
   const hasMore = allProducts.length > limit;
 
+  // URL for load more
   const params = new URLSearchParams();
   params.set("limit", limit + BATCH_SIZE);
   selectedCategories.forEach((c) => params.append("category", c));
@@ -176,8 +163,20 @@ const ProductsPage = async ({ searchParams }) => {
               )}
             </>
           ) : (
-            <div className="text-center py-20 text-gray-500 text-lg">
-              No products found matching your filters.
+            <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-16 h-16 mb-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h18v18H3V3z" />
+              </svg>
+              <h3 className="text-xl font-semibold mb-2">No products found</h3>
+              <p className="text-sm text-gray-400">
+                Try adjusting your filters or search terms.
+              </p>
             </div>
           )}
         </div>

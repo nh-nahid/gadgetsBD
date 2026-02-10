@@ -5,7 +5,6 @@ import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 import Link from "next/link";
 
-// Dynamically import Odometer only on client side
 const Odometer = dynamic(() => import("react-odometerjs"), { ssr: false });
 import "odometer/themes/odometer-theme-default.css";
 
@@ -20,10 +19,8 @@ export default function CartOdometer() {
         p-3 rounded-xl flex flex-col items-center gap-3
         border border-[#FA8900] w-24 hover:scale-105 transition-transform duration-300"
     >
-      {/* Shopping Icon */}
       <ShoppingCart className="w-6 h-6 text-[#FA8900] animate-bounce" />
 
-      {/* Total Items */}
       <div className="flex flex-col items-center">
         <span className="text-[10px] text-[#FA8900] uppercase tracking-wider font-semibold">
           Items
@@ -36,7 +33,6 @@ export default function CartOdometer() {
         />
       </div>
 
-      {/* Total Amount */}
       <div className="flex flex-col items-center">
         <span className="text-[10px] text-[#FA8900] uppercase tracking-wider font-semibold">
           Total
