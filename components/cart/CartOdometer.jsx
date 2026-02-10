@@ -1,10 +1,13 @@
 "use client";
 
-import Odometer from "react-odometerjs";
-import "odometer/themes/odometer-theme-default.css";
+import dynamic from "next/dynamic";
 import { ShoppingCart } from "lucide-react"; 
 import { useCart } from "@/app/context/CartContext";
 import Link from "next/link";
+
+// Dynamically import Odometer only on client side
+const Odometer = dynamic(() => import("react-odometerjs"), { ssr: false });
+import "odometer/themes/odometer-theme-default.css";
 
 export default function CartOdometer() {
   const { cartCount, totalAmount } = useCart();
