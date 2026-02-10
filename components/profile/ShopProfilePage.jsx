@@ -1,35 +1,10 @@
 "use client";
-
 import { useState } from "react";
 import ShopView from "./ShopView";
 import ShopEdit from "./ShopEdit";
-import { useShop } from "@/app/context/ShopContext";
 
-export default function ShopProfilePage() {
-  const { shop, setShop } = useShop(); // use context directly
+export default function ShopProfilePage({ shop, setShop }) {
   const [isEditMode, setIsEditMode] = useState(false);
-
-  if (!shop) return null; // wait until shop is loaded
-
-  // Merge defaults with context shop
-  const defaultShop = {
-    name: "",
-    shopSlug: "",
-    ownerName: "",
-    email: "",
-    phone: "",
-    description: "No description provided",
-    coverImage: "/placeholder.png",
-    location: { city: "Unknown", country: "Bangladesh" },
-    address: "",
-    rating: { average: 0, count: 0 },
-    specializesIn: ["General"],
-    yearEstablished: new Date().getFullYear(),
-    employees: 0,
-    brands: [],
-    website: "",
-    ...shop, // context shop is reactive
-  };
 
   return (
     <main className="max-w-[1200px] mx-auto w-full p-6">
@@ -57,9 +32,13 @@ export default function ShopProfilePage() {
       </div>
 
       {isEditMode ? (
-        <ShopEdit shop={defaultShop} setIsEditMode={setIsEditMode} setShop={setShop} />
+        <ShopEdit
+          shop={shop}
+          setIsEditMode={setIsEditMode}
+          setShop={setShop} // updates ProfilePage state
+        />
       ) : (
-        <ShopView shop={defaultShop} />
+        <ShopView shop={shop} />
       )}
     </main>
   );

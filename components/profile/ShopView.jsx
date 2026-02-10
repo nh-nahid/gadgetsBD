@@ -1,6 +1,8 @@
+"use client";
 import Image from "next/image";
 
 export default function ShopView({ shop }) {
+  // Safe merge to handle missing fields
   const safeShop = {
     name: "",
     ownerName: "",
@@ -8,32 +10,29 @@ export default function ShopView({ shop }) {
     phone: "",
     description: "No description provided",
     coverImage: "/placeholder.png",
-    location: { city: "Unknown city", country: "Unknown country" },
-    specializesIn: ["General"],
-    address: "",
+    location: { city: "Unknown city", country: "Bangladesh" },
     rating: { average: 0, count: 0 },
+    specializesIn: ["General"],
     yearEstablished: new Date().getFullYear(),
     employees: 0,
     brands: [],
     website: "",
     ...shop,
-    location: { ...{ city: "Unknown city", country: "Unknown country" }, ...(shop?.location || {}) },
+    location: { ...{ city: "Unknown city", country: "Bangladesh" }, ...(shop?.location || {}) },
     rating: { ...{ average: 0, count: 0 }, ...(shop?.rating || {}) },
   };
 
   return (
     <div className="space-y-6">
+      {/* Shop Preview Card */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300 flex justify-between items-center">
-          <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
-            Shop Preview
-          </h2>
+          <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">Shop Preview</h2>
           <span className="flex items-center bg-green-50 px-2 py-1 rounded border border-green-200">
             <i data-lucide="check-circle" className="w-3 h-3 text-green-600 mr-1"></i>
             <span className="text-[10px] font-bold text-green-700 uppercase">Verified</span>
           </span>
         </div>
-
         <div className="p-6">
           <div className="max-w-sm mx-auto bg-white border border-gray-200 rounded-sm overflow-hidden shadow-md">
             <div className="h-48 overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100">
@@ -50,7 +49,6 @@ export default function ShopView({ shop }) {
               <p className="text-sm text-gray-500 mb-3">
                 {safeShop.location.city}, {safeShop.location.country}
               </p>
-
               <div className="flex items-center gap-1 mb-3">
                 <div className="flex text-amazon-secondary">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -71,6 +69,7 @@ export default function ShopView({ shop }) {
         </div>
       </div>
 
+      {/* Shop Info Grid */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">Shop Information</h2>

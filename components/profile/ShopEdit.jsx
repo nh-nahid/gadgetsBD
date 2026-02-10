@@ -1,61 +1,46 @@
 "use client";
 
+import { useShop } from "@/app/context/ShopContext";
 import { Upload } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
 
-export default function ShopEdit({ shop, setShop, setIsEditMode }) {
+export default function ShopEdit({ shop, setShop, setIsEditMode  }) {
   const [bannerPreview, setBannerPreview] = useState(shop.coverImage || "");
   const [bannerFile, setBannerFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const handleBannerChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setErrors({ ...errors, banner: "Only JPG or PNG images allowed" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors({ ...errors, banner: "Image must be under 5MB" });
+      return;
+    }
+    setErrors({ ...errors, banner: null });
+    setBannerFile(file);
+    setBannerPreview(URL.createObjectURL(file));
+  };
 
   const validate = (data) => {
     const err = {};
     if (!data.name) err.name = "Shop name is required";
     if (!data.ownerName) err.ownerName = "Owner name is required";
     if (!data.email) err.email = "Email is required";
-    else if (!/^\S+@\S+\.\S+$/.test(data.email)) err.email = "Invalid email address";
     if (!data.phone) err.phone = "Phone number is required";
     if (!data.description) err.description = "Description is required";
     if (!data.address) err.address = "Address is required";
-    if (data.yearEstablished) {
-      const year = Number(data.yearEstablished);
-      if (year < 1900 || year > new Date().getFullYear()) {
-        err.yearEstablished = "Enter a valid year";
-      }
-    }
-    if (data.employees && Number(data.employees) < 0) {
-      err.employees = "Employees cannot be negative";
-    }
     return err;
-  };
-
-  const handleBannerChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const newErrors = { ...errors };
-    if (!["image/jpeg", "image/png"].includes(file.type)) {
-      newErrors.banner = "Only JPG or PNG images allowed";
-      setErrors(newErrors);
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      newErrors.banner = "Image must be under 5MB";
-      setErrors(newErrors);
-      return;
-    }
-    if (newErrors.banner) delete newErrors.banner;
-    setErrors(newErrors);
-
-    setBannerFile(file);
-    setBannerPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const form = e.target;
     const formData = {
       name: form.name.value,
@@ -63,9 +48,9 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
       email: form.email.value,
       phone: form.phone.value,
       description: form.description.value,
-      city: form.city.value || shop.location.city || "Unknown",
-      specializesIn: form.specializesIn.value || shop.specializesIn?.[0] || "General",
-      address: form.address.value || "",
+      city: form.city.value || shop.location.city,
+      specializesIn: form.specializesIn.value || shop.specializesIn?.[0],
+      address: form.address.value,
       yearEstablished: form.yearEstablished.value,
       employees: form.employees.value,
       brands: form.brands.value,
@@ -80,49 +65,27 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
 
     let coverImage = shop.coverImage;
 
-    // Upload new banner if selected
     if (bannerFile) {
       try {
         const bannerForm = new FormData();
         bannerForm.append("file", bannerFile);
-
-        const uploadRes = await fetch("/api/shop/upload-banner", {
-          method: "POST",
-          body: bannerForm,
-        });
+        const uploadRes = await fetch("/api/shop/upload-banner", { method: "POST", body: bannerForm });
         const uploadData = await uploadRes.json();
-
-        if (!uploadRes.ok || !uploadData.url) {
-          throw new Error("Image upload failed");
-        }
-
-        coverImage = uploadData.url;
+        coverImage = uploadData.url || coverImage;
       } catch (err) {
-        console.error("Error uploading banner:", err);
-        alert("Banner upload failed ❌");
+        alert("Banner upload failed");
         setLoading(false);
         return;
       }
     }
 
     const payload = {
-      name: formData.name,
-      ownerName: formData.ownerName,
-      email: formData.email,
-      phone: formData.phone,
-      description: formData.description,
-      location: {
-        city: formData.city,
-        country: "Bangladesh",
-      },
+      ...formData,
+      location: { city: formData.city, country: "Bangladesh" },
       specializesIn: [formData.specializesIn],
-      address: formData.address,
-      yearEstablished: formData.yearEstablished ? Number(formData.yearEstablished) : null,
-      employees: formData.employees ? Number(formData.employees) : null,
-      brands: formData.brands
-        ? formData.brands.split(",").map((b) => b.trim()).filter(Boolean)
-        : [],
-      website: formData.website || "",
+      yearEstablished: Number(formData.yearEstablished),
+      employees: Number(formData.employees),
+      brands: formData.brands.split(",").map(b => b.trim()).filter(Boolean),
       coverImage,
     };
 
@@ -132,16 +95,13 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       const resData = await res.json();
       if (!res.ok) throw new Error(resData.error || "Update failed");
 
-      // ✅ Update parent immediately
-      setShop(resData.shop);
-      alert("Shop updated successfully ✅");
+      setShop(resData.shop); // ✅ instantly update view
       setIsEditMode(false);
+      alert("Shop updated successfully ✅");
     } catch (err) {
-      console.error("Error updating shop:", err);
       alert("Something went wrong ❌");
     } finally {
       setLoading(false);
@@ -150,7 +110,7 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      {/* --- Basic Information --- */}
+
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -158,7 +118,6 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
           </h2>
         </div>
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Shop Name */}
           <div>
             <label className="block text-sm font-bold mb-1">Shop Name *</label>
             <input
@@ -167,9 +126,10 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               defaultValue={shop.name}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+            )}
           </div>
-          {/* Owner Name */}
           <div>
             <label className="block text-sm font-bold mb-1">Owner Name *</label>
             <input
@@ -178,9 +138,10 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               defaultValue={shop.ownerName}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.ownerName && <p className="text-red-500 text-xs mt-1">{errors.ownerName}</p>}
+            {errors.ownerName && (
+              <p className="text-red-500 text-xs mt-1">{errors.ownerName}</p>
+            )}
           </div>
-          {/* Email */}
           <div>
             <label className="block text-sm font-bold mb-1">Email *</label>
             <input
@@ -189,9 +150,10 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               defaultValue={shop.email}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
-          {/* Phone */}
           <div>
             <label className="block text-sm font-bold mb-1">Phone Number *</label>
             <input
@@ -200,9 +162,10 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               defaultValue={shop.phone}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+            {errors.phone && (
+              <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+            )}
           </div>
-          {/* Description */}
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-1">Shop Description *</label>
             <textarea
@@ -210,13 +173,14 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               rows={4}
               defaultValue={shop.description}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
-            />
-            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+            ></textarea>
+            {errors.description && (
+              <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* --- Location & Specialization --- */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -240,6 +204,9 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               <option>Rangpur</option>
               <option>Mymensingh</option>
             </select>
+            {errors.city && (
+              <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-bold mb-1">Specialization *</label>
@@ -256,6 +223,9 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               <option>Wearables</option>
               <option>Accessories</option>
             </select>
+            {errors.specializesIn && (
+              <p className="text-red-500 text-xs mt-1">{errors.specializesIn}</p>
+            )}
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-1">Full Address *</label>
@@ -264,12 +234,14 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               rows={2}
               defaultValue={shop.address}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
-            />
+            ></textarea>
+            {errors.address && (
+              <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* --- Banner Upload --- */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -291,6 +263,7 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               )}
             </div>
           </div>
+
           <div>
             <label className="block text-sm font-bold mb-1">Upload New Banner</label>
             <label
@@ -312,13 +285,14 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
                 className="hidden"
                 onChange={handleBannerChange}
               />
-              {errors.banner && <p className="text-red-500 text-xs mt-1">{errors.banner}</p>}
+              {errors.banner && (
+                <p className="text-red-500 text-xs mt-1">{errors.banner}</p>
+              )}
             </label>
           </div>
         </div>
       </div>
 
-      {/* --- Additional Information --- */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -334,6 +308,9 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               defaultValue={shop.yearEstablished}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
+            {errors.yearEstablished && (
+              <p className="text-red-500 text-xs mt-1">{errors.yearEstablished}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-bold mb-1">Number of Employees</label>
@@ -343,6 +320,9 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               defaultValue={shop.employees}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
+            {errors.employees && (
+              <p className="text-red-500 text-xs mt-1">{errors.employees}</p>
+            )}
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-1">Official Brand Partnerships (Optional)</label>
@@ -352,6 +332,9 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               defaultValue={shop.brands?.join(", ") || ""}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
+            {errors.brands && (
+              <p className="text-red-500 text-xs mt-1">{errors.brands}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">Separate multiple brands with commas</p>
           </div>
           <div className="md:col-span-2">
@@ -362,11 +345,13 @@ export default function ShopEdit({ shop, setShop, setIsEditMode }) {
               defaultValue={shop.website}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
+            {errors.website && (
+              <p className="text-red-500 text-xs mt-1">{errors.website}</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* --- Buttons --- */}
       <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
         <button
           onClick={() => setIsEditMode(false)}
