@@ -23,7 +23,7 @@ export default function Navbar() {
   const userId = session?.user?.id;
   const role = session?.user?.role || "USER";
 
-  
+  // Fetch cart count
   useEffect(() => {
     if (!userId || role === "SHOP_OWNER") return;
 
@@ -50,6 +50,7 @@ export default function Navbar() {
     fetchCart();
   }, [userId, role, setCartCount]);
 
+  // Refresh cart count when needed
   useEffect(() => {
     if (role !== "SHOP_OWNER") refreshCartCount(userId);
   }, [userId, role, refreshCartCount]);
@@ -119,7 +120,7 @@ export default function Navbar() {
           {renderMenu()}
         </div>
 
-        {/* User */}
+        {/* User / Shop Owner */}
         {session?.user && (
           <Link
             href={role === "SHOP_OWNER" ? "/profile" : "#"}

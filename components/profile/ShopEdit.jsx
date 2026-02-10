@@ -1,16 +1,14 @@
 "use client";
 
-import { useShop } from "@/app/context/ShopContext";
 import { Upload } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
 
-export default function ShopEdit({ shop, setIsEditMode  }) {
-   const [bannerPreview, setBannerPreview] = useState(shop.coverImage || "");
+export default function ShopEdit({ shop, setShop, setIsEditMode }) {
+  const [bannerPreview, setBannerPreview] = useState(shop.coverImage || "");
   const [bannerFile, setBannerFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-const { setShop } = useShop();
 
   const validate = (data) => {
     const err = {};
@@ -57,7 +55,6 @@ const { setShop } = useShop();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted");
 
     const form = e.target;
     const formData = {
@@ -83,6 +80,7 @@ const { setShop } = useShop();
 
     let coverImage = shop.coverImage;
 
+    // Upload new banner if selected
     if (bannerFile) {
       try {
         const bannerForm = new FormData();
@@ -92,14 +90,13 @@ const { setShop } = useShop();
           method: "POST",
           body: bannerForm,
         });
-
         const uploadData = await uploadRes.json();
 
         if (!uploadRes.ok || !uploadData.url) {
           throw new Error("Image upload failed");
         }
 
-        coverImage = uploadData.url; 
+        coverImage = uploadData.url;
       } catch (err) {
         console.error("Error uploading banner:", err);
         alert("Banner upload failed ❌");
@@ -129,8 +126,6 @@ const { setShop } = useShop();
       coverImage,
     };
 
-
-
     try {
       const res = await fetch("/api/shop/update", {
         method: "PUT",
@@ -139,11 +134,10 @@ const { setShop } = useShop();
       });
 
       const resData = await res.json();
-      console.log("API response:", resData);
-
       if (!res.ok) throw new Error(resData.error || "Update failed");
-      
-      if (setShop) setShop(resData.shop);
+
+      // ✅ Update parent immediately
+      setShop(resData.shop);
       alert("Shop updated successfully ✅");
       setIsEditMode(false);
     } catch (err) {
@@ -154,10 +148,9 @@ const { setShop } = useShop();
     }
   };
 
-
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-
+      {/* --- Basic Information --- */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -165,6 +158,7 @@ const { setShop } = useShop();
           </h2>
         </div>
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Shop Name */}
           <div>
             <label className="block text-sm font-bold mb-1">Shop Name *</label>
             <input
@@ -173,10 +167,9 @@ const { setShop } = useShop();
               defaultValue={shop.name}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.name && (
-              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-            )}
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
           </div>
+          {/* Owner Name */}
           <div>
             <label className="block text-sm font-bold mb-1">Owner Name *</label>
             <input
@@ -185,10 +178,9 @@ const { setShop } = useShop();
               defaultValue={shop.ownerName}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.ownerName && (
-              <p className="text-red-500 text-xs mt-1">{errors.ownerName}</p>
-            )}
+            {errors.ownerName && <p className="text-red-500 text-xs mt-1">{errors.ownerName}</p>}
           </div>
+          {/* Email */}
           <div>
             <label className="block text-sm font-bold mb-1">Email *</label>
             <input
@@ -197,10 +189,9 @@ const { setShop } = useShop();
               defaultValue={shop.email}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-            )}
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
+          {/* Phone */}
           <div>
             <label className="block text-sm font-bold mb-1">Phone Number *</label>
             <input
@@ -209,10 +200,9 @@ const { setShop } = useShop();
               defaultValue={shop.phone}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.phone && (
-              <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-            )}
+            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
           </div>
+          {/* Description */}
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-1">Shop Description *</label>
             <textarea
@@ -220,14 +210,13 @@ const { setShop } = useShop();
               rows={4}
               defaultValue={shop.description}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
-            ></textarea>
-            {errors.description && (
-              <p className="text-red-500 text-xs mt-1">{errors.description}</p>
-            )}
+            />
+            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
           </div>
         </div>
       </div>
 
+      {/* --- Location & Specialization --- */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -251,9 +240,6 @@ const { setShop } = useShop();
               <option>Rangpur</option>
               <option>Mymensingh</option>
             </select>
-            {errors.city && (
-              <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-            )}
           </div>
           <div>
             <label className="block text-sm font-bold mb-1">Specialization *</label>
@@ -270,9 +256,6 @@ const { setShop } = useShop();
               <option>Wearables</option>
               <option>Accessories</option>
             </select>
-            {errors.specializesIn && (
-              <p className="text-red-500 text-xs mt-1">{errors.specializesIn}</p>
-            )}
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-1">Full Address *</label>
@@ -281,14 +264,12 @@ const { setShop } = useShop();
               rows={2}
               defaultValue={shop.address}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
-            ></textarea>
-            {errors.address && (
-              <p className="text-red-500 text-xs mt-1">{errors.address}</p>
-            )}
+            />
           </div>
         </div>
       </div>
 
+      {/* --- Banner Upload --- */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -310,7 +291,6 @@ const { setShop } = useShop();
               )}
             </div>
           </div>
-
           <div>
             <label className="block text-sm font-bold mb-1">Upload New Banner</label>
             <label
@@ -332,14 +312,13 @@ const { setShop } = useShop();
                 className="hidden"
                 onChange={handleBannerChange}
               />
-              {errors.banner && (
-                <p className="text-red-500 text-xs mt-1">{errors.banner}</p>
-              )}
+              {errors.banner && <p className="text-red-500 text-xs mt-1">{errors.banner}</p>}
             </label>
           </div>
         </div>
       </div>
 
+      {/* --- Additional Information --- */}
       <div className="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-300">
           <h2 className="font-bold text-gray-700 uppercase tracking-wider text-xs">
@@ -355,9 +334,6 @@ const { setShop } = useShop();
               defaultValue={shop.yearEstablished}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.yearEstablished && (
-              <p className="text-red-500 text-xs mt-1">{errors.yearEstablished}</p>
-            )}
           </div>
           <div>
             <label className="block text-sm font-bold mb-1">Number of Employees</label>
@@ -367,9 +343,6 @@ const { setShop } = useShop();
               defaultValue={shop.employees}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.employees && (
-              <p className="text-red-500 text-xs mt-1">{errors.employees}</p>
-            )}
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-1">Official Brand Partnerships (Optional)</label>
@@ -379,9 +352,6 @@ const { setShop } = useShop();
               defaultValue={shop.brands?.join(", ") || ""}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.brands && (
-              <p className="text-red-500 text-xs mt-1">{errors.brands}</p>
-            )}
             <p className="text-xs text-gray-500 mt-1">Separate multiple brands with commas</p>
           </div>
           <div className="md:col-span-2">
@@ -392,13 +362,11 @@ const { setShop } = useShop();
               defaultValue={shop.website}
               className="w-full px-3 py-2 border border-gray-400 rounded-md outline-none focus:ring-1 focus:ring-amazon-blue focus:border-amazon-blue"
             />
-            {errors.website && (
-              <p className="text-red-500 text-xs mt-1">{errors.website}</p>
-            )}
           </div>
         </div>
       </div>
 
+      {/* --- Buttons --- */}
       <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
         <button
           onClick={() => setIsEditMode(false)}

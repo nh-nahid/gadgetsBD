@@ -1,19 +1,20 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import ShopProfilePage from "@/components/profile/ShopProfilePage";
 import { useSession } from "next-auth/react";
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!session?.user?.id) return; 
+    if (!session?.user?.id) return;
 
     const fetchShop = async () => {
       try {
-        const res = await fetch("/api/profile/shop");
+        const res = await fetch("/api/profile/shop", { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to fetch shop");
         const data = await res.json();
         setShop(data.shop || null);
@@ -26,7 +27,7 @@ export default function ProfilePage() {
     };
 
     fetchShop();
-  }, [session]);
+  }, [session?.user?.id]);
 
   if (loading) {
     return (
@@ -40,10 +41,16 @@ export default function ProfilePage() {
   if (!shop) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-gray-700 text-lg font-medium">You don&apos;t have a shop yet.</p>
+        <p className="text-gray-700 text-lg font-medium">
+          You don&apos;t have a shop yet.
+        </p>
       </div>
     );
   }
 
-  return <ShopProfilePage shop={shop} setShop={setShop} />;
+  return (
+    <ShopProfilePage
+         
+    />
+  );
 }

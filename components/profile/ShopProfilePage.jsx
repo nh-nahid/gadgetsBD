@@ -3,10 +3,15 @@
 import { useState } from "react";
 import ShopView from "./ShopView";
 import ShopEdit from "./ShopEdit";
+import { useShop } from "@/app/context/ShopContext";
 
-export default function ShopProfilePage({ shop, setShop }) {
+export default function ShopProfilePage() {
+  const { shop, setShop } = useShop(); // use context directly
   const [isEditMode, setIsEditMode] = useState(false);
 
+  if (!shop) return null; // wait until shop is loaded
+
+  // Merge defaults with context shop
   const defaultShop = {
     name: "",
     shopSlug: "",
@@ -23,7 +28,7 @@ export default function ShopProfilePage({ shop, setShop }) {
     employees: 0,
     brands: [],
     website: "",
-    ...shop, 
+    ...shop, // context shop is reactive
   };
 
   return (
