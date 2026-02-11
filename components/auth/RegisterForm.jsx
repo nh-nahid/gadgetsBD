@@ -40,7 +40,9 @@ export default function RegisterForm() {
       newErrors.password = "Password must be at least 6 characters";
     }
 
-    if (form.password.value !== form.passwordConfirm.value) {
+    if (!form.passwordConfirm.value) {
+      newErrors.passwordConfirm = "Please confirm your password";
+    } else if (form.password.value !== form.passwordConfirm.value) {
       newErrors.passwordConfirm = "Passwords do not match";
     }
 
@@ -51,7 +53,7 @@ export default function RegisterForm() {
     e.preventDefault();
     e.stopPropagation();
 
-    const form = e.target;
+    const form = e.currentTarget;
     setErrors({});
 
     const validationErrors = validateForm(form);
@@ -87,25 +89,24 @@ export default function RegisterForm() {
         return;
       }
 
-  
-      if (isOwner) {
-        const login = await signIn("credentials", {
-          redirect: false,
-          email: data.email,
-          password: data.password,
-        });
-
-        if (login?.error) {
-          setErrors({ api: "Auto-login failed" });
-          return;
-        }
-
-        router.replace("/profile");
+      // If USER → redirect to login
+      if (!isOwner) {
+        router.replace("/login");
         return;
       }
 
-      localStorage.setItem("accessToken", result.accessToken);
-      localStorage.setItem("refreshToken", result.refreshToken);
+      // If SHOP_OWNER → auto login
+      const login = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+
+      if (login?.error) {
+        setErrors({ api: "Auto-login failed" });
+        return;
+      }
+
       router.replace("/profile");
     } catch (err) {
       setLoading(false);
@@ -130,10 +131,14 @@ export default function RegisterForm() {
         {errors.api && (
           <p className="text-red-500 text-sm mb-3">{errors.api}</p>
         )}
+
         <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-sm">
           <button
             type="button"
-            onClick={() => setRole("USER")}
+            onClick={() => {
+              setRole("USER");
+              setErrors({});
+            }}
             className={`flex-1 py-1 text-xs font-bold rounded-sm ${
               !isOwner ? "bg-white shadow-sm" : "text-gray-500"
             }`}
@@ -142,7 +147,10 @@ export default function RegisterForm() {
           </button>
           <button
             type="button"
-            onClick={() => setRole("SHOP_OWNER")}
+            onClick={() => {
+              setRole("SHOP_OWNER");
+              setErrors({});
+            }}
             className={`flex-1 py-1 text-xs font-bold rounded-sm ${
               isOwner ? "bg-white shadow-sm" : "text-gray-500"
             }`}
@@ -155,22 +163,34 @@ export default function RegisterForm() {
           <div>
             <label className="block text-sm font-bold mb-1">Your name</label>
             <input name="name" className={inputClass("name")} />
-            {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+            {errors.name && (
+              <p className="text-xs text-red-500">{errors.name}</p>
+            )}
           </div>
 
           {isOwner && (
             <div>
-              <label className="block text-sm font-bold mb-1">Shop name</label>
+              <label className="block text-sm font-bold mb-1">
+                Shop name
+              </label>
               <input name="shopName" className={inputClass("shopName")} />
               {errors.shopName && (
-                <p className="text-xs text-red-500">{errors.shopName}</p>
+                <p className="text-xs text-red-500">
+                  {errors.shopName}
+                </p>
               )}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-bold mb-1">Mobile number</label>
-            <input name="mobile" className={inputClass("mobile")} />
+            <label className="block text-sm font-bold mb-1">
+              Mobile number
+            </label>
+            <input
+              name="mobile"
+              type="tel"
+              className={inputClass("mobile")}
+            />
             {errors.mobile && (
               <p className="text-xs text-red-500">{errors.mobile}</p>
             )}
@@ -178,7 +198,11 @@ export default function RegisterForm() {
 
           <div>
             <label className="block text-sm font-bold mb-1">Email</label>
-            <input name="email" className={inputClass("email")} />
+            <input
+              name="email"
+              type="email"
+              className={inputClass("email")}
+            />
             {errors.email && (
               <p className="text-xs text-red-500">{errors.email}</p>
             )}
@@ -219,7 +243,9 @@ export default function RegisterForm() {
               loading ? "opacity-60 cursor-not-allowed" : ""
             }`}
           >
-            {loading ? "Creating account..." : "Create your Gadgets BD account"}
+            {loading
+              ? "Creating account..."
+              : "Create your Gadgets BD account"}
           </button>
         </form>
 
@@ -228,10 +254,17 @@ export default function RegisterForm() {
             <span>or continue with</span>
             <button
               type="button"
-              onClick={() => (window.location.href = "/api/auth/signin/google")}
+              onClick={() =>
+                (window.location.href = "/api/auth/signin/google")
+              }
               className="flex items-center gap-2 p-2 border rounded"
             >
-              <Image src="/google-icon.png" alt="Google" width={16} height={16} />
+              <Image
+                src="/google-icon.png"
+                alt="Google"
+                width={16}
+                height={16}
+              />
               Google
             </button>
           </div>

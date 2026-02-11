@@ -36,7 +36,6 @@ export default function SidebarFilter() {
   const [selectedAvailability, setSelectedAvailability] = useState(["all"]);
   const [selectedReviews, setSelectedReviews] = useState(["all"]);
 
-  // Load initial state from URL ONLY if on /products
   useEffect(() => {
     if (pathname !== "/products") return;
 

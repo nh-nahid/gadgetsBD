@@ -6,7 +6,6 @@ import { Search } from "lucide-react";
 import { slugify } from "@/utils/slugify";
 import { debounce } from "lodash";
 
-// Mapping: short display name => full category => URL slug
 const categoryMap = [
   { label: "All", full: "All" },
   { label: "Laptops", full: "Laptops & Computers" },
@@ -21,7 +20,6 @@ const SearchFilter = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // --- Initial values from URL
   const initialQuery = searchParams.get("q") || "";
   const initialCategorySlug = searchParams.get("category") || "all";
   const initialCategoryLabel =
@@ -32,13 +30,11 @@ const SearchFilter = () => {
 
   const firstRender = useRef(true);
 
-  // --- Debounced search function
   const performSearch = useMemo(
     () =>
       debounce((q, label) => {
         const catObj = categoryMap.find((c) => c.label === label);
 
-        // Skip redirect if no query and category is "All"
         if (!q && (!catObj || catObj.label === "All")) return;
 
         const params = new URLSearchParams();
@@ -50,9 +46,7 @@ const SearchFilter = () => {
     [router]
   );
 
-  // --- Effect for query changes
   useEffect(() => {
-    // Skip on first render to prevent auto redirect
     if (firstRender.current) {
       firstRender.current = false;
       return;
@@ -62,7 +56,6 @@ const SearchFilter = () => {
     return () => performSearch.cancel();
   }, [query, selectedCategory, performSearch]);
 
-  // --- Category change handler
 const handleCategoryChange = (e) => {
   const value = e.target.value;
   setSelectedCategory(value);
@@ -70,22 +63,18 @@ const handleCategoryChange = (e) => {
   const catObj = categoryMap.find((c) => c.label === value);
   const params = new URLSearchParams(searchParams.toString());
 
-  // Remove existing category param (this clears the filter)
   params.delete("category");
 
-  // Only set category param if not "All"
   if (catObj && catObj.label !== "All") {
     params.set("category", slugify(catObj.full));
   }
 
-  // Always push new URL — even if "All"
   router.push(`/products?${params.toString()}`);
 };
 
 
   return (
     <div className="flex-1 flex h-10 rounded-md overflow-hidden focus-within:ring-3 focus-within:ring-amazon-secondary">
-      {/* Category Select */}
       <select
         className="bg-gray-100 text-black text-xs px-2 border-r border-gray-300 cursor-pointer hover:bg-gray-200"
         value={selectedCategory}
@@ -98,7 +87,6 @@ const handleCategoryChange = (e) => {
         ))}
       </select>
 
-      {/* Search Input */}
       <input
         type="text"
         autoComplete="off"
@@ -108,7 +96,6 @@ const handleCategoryChange = (e) => {
         className="flex-1 px-3 text-black outline-none"
       />
 
-      {/* Search Button */}
       <button
         onClick={() => performSearch.flush()}
         className="bg-amazon-secondary hover:bg-[#fa8900] px-4 flex items-center justify-center"
