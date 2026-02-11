@@ -23,14 +23,12 @@ export default function Navbar() {
   const userId = session?.user?.id;
   const role = session?.user?.role || "USER";
 
-  // Refresh cart count **once** when userId changes
   useEffect(() => {
     if (userId && role !== "SHOP_OWNER") {
       refreshCartCount(userId);
     }
   }, [userId, role, refreshCartCount]);
 
-  // Animate cart icon when cartCount changes
   useEffect(() => {
     if (cartCount !== prevCartCount.current) {
       setAnimate(true);
@@ -114,7 +112,7 @@ export default function Navbar() {
               </div>
             )}
             <span className="hidden md:block text-sm font-medium text-gray-200">
-              {role === "SHOP_OWNER" ? shop?.name || session.user.name : session.user.name}
+              {role === "SHOP_OWNER" ? shop?.name || session.user.shopName : session.user.name}
             </span>
           </Link>
         )}
