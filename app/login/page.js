@@ -6,7 +6,7 @@ import React from 'react';
 const LoginPage = async () => {
      const session = await auth();
 
-  if (session?.user?._id || session?.user?.id) {
+  if (session?.user?.id || session?.user?._id) {
     redirect('/'); 
   }
     return (
