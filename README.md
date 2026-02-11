@@ -87,9 +87,6 @@ The platform simulates a real online marketplace where multiple shop owners can 
 
 ---
 
-## 🔰 Extra Features
-- Odometer for live item and amount count
----
 
 ## 💳 Payment & Orders
 - Fake payment simulation
@@ -164,6 +161,11 @@ The platform simulates a real online marketplace where multiple shop owners can 
   - Logout
 
 ---
+
+## 🔰 Extra Features
+- Odometer for live item and amount count
+---
+
 
 ## 🛠 Tech Stack
 - Next.js (App Router)
