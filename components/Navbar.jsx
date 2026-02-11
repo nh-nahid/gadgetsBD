@@ -22,6 +22,7 @@ export default function Navbar() {
 
   const userId = session?.user?.id;
   const role = session?.user?.role || "USER";
+console.log(session?.user);
 
   useEffect(() => {
     if (userId && role !== "SHOP_OWNER") {
@@ -112,7 +113,7 @@ export default function Navbar() {
               </div>
             )}
             <span className="hidden md:block text-sm font-medium text-gray-200">
-              {role === "SHOP_OWNER" ? shop?.name || session?.user?.name : session?.user?.shopName}
+              {role === "SHOP_OWNER" ? shop?.name || session?.user?.shopName : session?.user?.name}
             </span>
           </Link>
         )}
